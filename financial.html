@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - Financial Hub</title>
+    
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
+        
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
+
+        /* Khusus Print Laporan */
+        @media print { 
+            body * { visibility: hidden; } 
+            body { background: white; margin: 0; padding: 0; }
+            #print-area, #print-area * { visibility: visible; } 
+            #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+            @page { size: A4; margin: 15mm; }
+            table { page-break-inside: auto; width: 100%; border-collapse: collapse; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            .page-break { page-break-before: always; margin-top: 20px; }
+        }
+    </style>
+</head>
+<body class="pb-10">
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        if (!session || session.role !== 'manager') { 
+            window.location.href = 'index.html'; 
+        }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-white">MENGHITUNG KEUANGAN...</h2>
+    </div>
+
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+            <button onclick="window.location.href='manager.html'" class="mario-btn bg-white text-black px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-black shadow-[2px_2px_0px_#FFD700]">◀ DASHBOARD</button>
+            <div class="text-right">
+                <h1 class="text-lg md:text-xl font-black text-white leading-none">FINANCIAL HUB</h1>
+                <p id="user-info-text" class="text-[9px] md:text-xs font-bold text-yellow-400 uppercase tracking-widest mt-1">SINKRONISASI...</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="w-full max-w-5xl mx-auto px-4 mt-4">
+        <div class="flex bg-white border-4 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_#000]">
+            <button onclick="APP.switchTab('omset')" id="tab-omset" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all bg-black text-white">📈 Omset</button>
+            <button onclick="APP.switchTab('biaya')" id="tab-biaya" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100 border-x-4 border-black">💸 Biaya</button>
+            <button onclick="APP.switchTab('report')" id="tab-report" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100">📊 Report</button>
+        </div>
+    </div>
+
+    <main id="app" class="w-full max-w-6xl mx-auto p-4 md:p-6 animate-pop">
+        <div id="main-content" class="w-full mx-auto"></div>
+    </main>
+
+    <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
+    <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
+
+    <div id="print-area" class="hidden"></div>
+
+    <script>
+        const CONFIG = {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1"
+        };
+
+        const STATE = { 
+            user: session, 
+            logs: [], 
+            expenses: [], 
+            activeTab: 'omset',
+            activeModalRowId: null, activeModalStat: null, activeModalUnit: null, activeModalPay: null
+        };
+
+        const APP = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | MANAGER`;
+                APP.loadDashboard();
+            },
+
+            showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
+            hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
+            getNowStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().replace('T', ' ').substring(0,19); },
+            getTodayStr: () => APP.getNowStr().substring(0,10),
+            getYesterdayStr: () => { const d = new Date(); d.setDate(d.getDate()-1); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
+            getMonthStr: () => APP.getNowStr().substring(0,7),
+            
+            generateMonthOptions: () => {
+                const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                let opts = ''; 
+                for(let i=0; i<12; i++) { 
+                    let d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); 
+                    opts += `<option value="${d.toISOString().substring(0,7)}">${names[d.getMonth()]} ${d.getFullYear()}</option>`; 
+                }
+                return opts;
+            },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return null; }
+            },
+
+            loadDashboard: async () => {
+                APP.showLoader('MENGAMBIL DATA SERVER...');
+                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
+                APP.hideLoader();
+
+                let raw = Array.isArray(res) ? res.map((i, idx) => {
+                    let d = i.json || i; 
+                    if (i.id !== undefined && d.id === undefined) d.id = i.id; 
+                    d._dbIndex = idx; return d;
+                }) : [];
+
+                STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
+                STATE.expenses = raw.filter(i => i.pengeluaran_arena !== undefined);
+                
+                APP.switchTab(STATE.activeTab);
+            },
+
+            switchTab: (tab) => {
+                STATE.activeTab = tab;
+                
+                // Update UI Navigation Tabs
+                ['omset', 'biaya', 'report'].forEach(t => {
+                    let btn = document.getElementById(`tab-${t}`);
+                    if (t === tab) {
+                        btn.classList.add('bg-black', 'text-white');
+                        btn.classList.remove('hover:bg-gray-100', 'bg-white', 'text-black');
+                    } else {
+                        btn.classList.remove('bg-black', 'text-white');
+                        btn.classList.add('hover:bg-gray-100', 'bg-white', 'text-black');
+                    }
+                });
+
+                const container = document.getElementById('main-content');
+                if (tab === 'omset') { container.innerHTML = APP.renderOmsetTab(); } 
+                else if (tab === 'biaya') { container.innerHTML = APP.renderExpenseForm(); } 
+                else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); APP.updateReportPreview(); }
+            },
+
+            // =====================================
+            // 1. DASHBOARD OMSET (MONITORING)
+            // =====================================
+            renderOmsetTab: () => {
+                const todayStr = APP.getTodayStr(); 
+                const yestStr = APP.getYesterdayStr(); 
+                const monthStr = APP.getMonthStr();
+                
+                let data = { ALL: { t: 0, y: 0, m: 0 }, 'Sabang': { t: 0, y: 0, m: 0 }, 'Banda': { t: 0, y: 0, m: 0 }, 'Aceh Timur': { t: 0, y: 0, m: 0 } };
+                let lostIncome = 0; let cancelStats = {}; let cancelHtml = ''; let successGroup = { 'Banda': [], 'Sabang': [], 'Aceh Timur': [] };
+
+                [...STATE.logs].reverse().forEach(l => {
+                    const stat = String(l.status_unit_arena).toLowerCase(); 
+                    const val = Number(l.tagihan_arena) || 0;
+                    
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    const dateStr = safeDate.substring(0,10); 
+                    const mStr = safeDate.substring(0,7);
+                    const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
+                    const canceler = l.admin_name || l.Users || 'Sistem';
+
+                    if (mStr === monthStr) {
+                        if (stat === 'batal') { 
+                            lostIncome += val; 
+                            if(!cancelStats[canceler]) cancelStats[canceler] = { count: 0, total: 0 }; 
+                            cancelStats[canceler].count++; 
+                            cancelStats[canceler].total += val; 
+                            cancelHtml += APP.renderSingleLogCard(l); 
+                        } 
+                        else if (!['pending', 'maintenance'].includes(stat)) { 
+                            data.ALL.m += val; 
+                            if (data[branch]) data[branch].m += val; 
+                            if (dateStr === todayStr) { data.ALL.t += val; if (data[branch]) data[branch].t += val; } 
+                            if (dateStr === yestStr) { data.ALL.y += val; if (data[branch]) data[branch].y += val; } 
+                            if(successGroup[branch]) successGroup[branch].push(l); 
+                        }
+                    }
+                });
+
+                let cancelStatsHtml = Object.keys(cancelStats).map(k => `
+                    <div class="flex justify-between items-center bg-red-100 p-3 rounded border-2 border-red-300 shadow-sm">
+                        <span class="font-black text-xs text-red-800 uppercase">👤 ${k}</span>
+                        <span class="font-black text-sm text-red-600">${cancelStats[k].count}x (${APP.formatRp(cancelStats[k].total)})</span>
+                    </div>`).join('') || '<p class="text-xs text-gray-500 italic text-center py-4">Belum ada pembatalan.</p>';
+
+                let successHtml = ['Banda', 'Sabang', 'Aceh Timur'].map(b => {
+                    if(successGroup[b].length === 0) return '';
+                    let list = successGroup[b].map(l => APP.renderSingleLogCard(l)).join('');
+                    return `
+                    <div class="mb-5">
+                        <div class="bg-green-100 border-2 border-green-600 p-3 rounded-t-xl flex justify-between items-center shadow-[2px_2px_0px_#16a34a]">
+                            <h4 class="font-black text-xs md:text-sm text-green-900 uppercase">${b === 'Banda' ? 'BANDA ACEH' : b}</h4>
+                            <span class="font-black text-[10px] md:text-xs text-green-800 bg-white px-2 py-1 rounded shadow-sm border border-green-300">Omset: ${APP.formatRp(data[b].m)}</span>
+                        </div>
+                        <div class="border-2 border-green-600 border-t-0 p-3 rounded-b-xl space-y-3 bg-green-50 shadow-[2px_2px_0px_#16a34a]">
+                            ${list}
+                        </div>
+                    </div>`;
+                }).join('') || '<p class="text-center text-sm text-gray-500 font-bold py-6">Tidak ada data transaksi.</p>';
+
+                return `
+                    <div class="mario-card p-4 md:p-8 animate-pop w-full">
+                        <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 uppercase text-xl md:text-2xl">Monitoring Omset</h2>
+                        
+                        <div class="bg-black text-white p-6 rounded-xl border-4 border-yellow-400 mb-8 shadow-[6px_6px_0px_#000]">
+                            <p class="text-xs font-bold text-gray-300 text-center uppercase tracking-widest">TOTAL KESELURUHAN (BULAN INI)</p>
+                            <p class="text-4xl md:text-5xl font-black text-yellow-400 text-center mt-2">${APP.formatRp(data.ALL.m)}</p>
+                            <div class="flex justify-between mt-6 pt-4 border-t-2 border-gray-700">
+                                <div class="text-left"><p class="text-[10px] text-gray-400 font-bold tracking-wider">HARI INI</p><p class="font-black text-green-400 text-lg md:text-xl">${APP.formatRp(data.ALL.t)}</p></div>
+                                <div class="text-right"><p class="text-[10px] text-gray-400 font-bold tracking-wider">KEMARIN</p><p class="font-black text-[#FF6B00] text-lg md:text-xl">${APP.formatRp(data.ALL.y)}</p></div>
+                            </div>
+                        </div>
+
+                        <h3 class="font-black text-sm mb-3 uppercase text-gray-700 border-l-4 border-[#FF6B00] pl-2">Rincian Per Cabang</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                            ${['Banda', 'Sabang', 'Aceh Timur'].map(b => `
+                                <div class="border-2 border-black p-4 rounded-xl shadow-[4px_4px_0px_#000] bg-white hover:bg-orange-50 transition-colors">
+                                    <p class="font-black text-base mb-3 border-b-2 border-dashed border-gray-300 pb-2 text-[#FF6B00]">${b === 'Banda' ? 'BANDA ACEH' : b.toUpperCase()}</p>
+                                    <div class="grid grid-cols-3 gap-2 text-center">
+                                        <div><p class="text-[9px] font-bold text-gray-500 uppercase">HARI INI</p><p class="text-sm font-black text-green-600 mt-1">${APP.formatRp(data[b].t)}</p></div>
+                                        <div><p class="text-[9px] font-bold text-gray-500 uppercase">KEMARIN</p><p class="text-sm font-black text-gray-700 mt-1">${APP.formatRp(data[b].y)}</p></div>
+                                        <div class="bg-orange-100 rounded py-1"><p class="text-[9px] font-bold text-orange-800 uppercase">BULAN INI</p><p class="text-sm font-black text-[#FF6B00] mt-1">${APP.formatRp(data[b].m)}</p></div>
+                                    </div>
+                                </div>`).join('')}
+                        </div>
+
+                        <div class="border-t-4 border-black pt-8 mb-8">
+                            <div class="bg-red-100 border-4 border-red-600 p-6 rounded-2xl shadow-[6px_6px_0px_#dc2626] mb-6 relative overflow-hidden w-full md:max-w-lg mx-auto">
+                                <div class="absolute -right-4 -top-4 opacity-10 text-8xl">💸</div>
+                                <p class="text-xs font-bold text-red-800 text-center uppercase tracking-widest mb-2">Potensi Cuan Hilang (Batal)</p>
+                                <p class="text-4xl font-black text-red-600 text-center">${APP.formatRp(lostIncome)}</p>
+                            </div>
+                            <h3 class="font-black text-sm mb-3 uppercase text-gray-700 border-l-4 border-red-600 pl-2">PIC Pembatalan</h3>
+                            <div class="space-y-2 mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">${cancelStatsHtml}</div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="font-black text-sm md:text-base mb-4 uppercase text-green-900 bg-green-200 px-4 py-2 rounded-lg inline-block shadow-sm">✅ Riwayat Sukses (Bulan Ini)</h3>
+                                <div class="max-h-[600px] overflow-y-auto custom-scroll pr-3">${successHtml}</div>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-sm md:text-base mb-4 uppercase text-red-900 bg-red-200 px-4 py-2 rounded-lg inline-block shadow-sm">❌ Riwayat Batal (Bulan Ini)</h3>
+                                <div class="max-h-[600px] overflow-y-auto custom-scroll pr-3 space-y-3">${cancelHtml || '<p class="text-center text-sm text-gray-500 font-bold bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">Tidak ada data batal.</p>'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            },
+
+            // Fungsi Pendukung Render Card di Omset
+            renderSingleLogCard: (l) => {
+                const rId = l.id || l.row_number || l._rowIndex || '';
+                const uLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
+                const cLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                let dStr = ''; 
+                if (safeDate) { const dObj = new Date(safeDate.replace(' ', 'T')); if (!isNaN(dObj)) dStr = ['MINGGU','SENIN','SELASA','RABU','KAMIS','JUMAT','SABTU'][dObj.getDay()]; }
+                
+                const stat = String(l.status_unit_arena).toLowerCase(); 
+                const pay = l.pembayaran || 'Belum';
+                const wLink = l.link_wa_pelanggan_arena || 'https://wa.me/' + String(l.nomor_pelanggan_arena).replace(/^0/, '62');
+                
+                let cardClass = "border-2 border-black p-3 rounded-xl bg-white relative w-full h-full flex flex-col";
+                let badgeHtml = ""; let txtClass = "";
+                let payClass = 'bg-red-400 text-white border-red-700'; let payTxt = '❌ BELUM';
+                
+                if (pay === 'Lunas Cash') { payClass = 'bg-green-400 text-black border-green-700'; payTxt = '💵 CASH'; }
+                else if (pay === 'Lunas Transfer') { payClass = 'bg-blue-500 text-white border-blue-800'; payTxt = '📱 TF'; }
+                else if (pay === 'Lunas' || pay === 'lunas') { payClass = 'bg-green-400 text-black border-green-700'; payTxt = '✅ LUNAS'; }
+
+                if (stat === 'batal') { 
+                    cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-80 relative flex flex-col"; txtClass = "line-through text-gray-500"; badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg shadow-md z-10">❌ BATAL</div>`; 
+                } else if (stat === 'booked' || stat === 'book') { 
+                    cardClass += " shadow-[2px_2px_0px_#000]";
+                } else if (stat === 'playing' || stat === 'main') { 
+                    cardClass += " shadow-[2px_2px_0px_#000]"; badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>`; 
+                } else if (stat === 'finished' || stat === 'selesai') { 
+                    if (pay === 'Belum' || !pay) { cardClass = "border-4 border-red-600 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#dc2626] relative flex flex-col"; badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg animate-pulse shadow-md">⚠️ BELUM BAYAR</div>`; } 
+                    else { cardClass = "border-2 border-gray-300 p-3 rounded-xl bg-gray-50 relative flex flex-col"; } 
+                }
+
+                const oVal = l.ongkir || l.ongkir_arena || 0;
+                const oLbl = Number(oVal) > 0 ? `<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 border border-blue-300 rounded ml-2">+ Ongkir ${APP.formatRp(oVal)}</span>` : '';
+
+                return `
+                <div class="${cardClass} mb-2">
+                    ${badgeHtml}
+                    <div class="flex justify-between items-start mb-2 border-b border-dashed border-gray-300 pb-2">
+                        <div class="flex flex-col">
+                            <span class="font-black text-lg text-[#FF6B00] leading-none mb-1 ${txtClass}">${dStr}</span>
+                            <span class="font-bold text-[10px] text-gray-500">${safeDate.substring(0,16)}</span>
+                        </div>
+                        <span class="font-black text-[9px] bg-black text-white px-2 py-1 rounded-md mt-1">${uLabel} (${cLabel})</span>
+                    </div>
+                    <p class="font-bold text-sm uppercase flex-grow ${txtClass}">${l.nama_pelanggan_arena} <span class="text-[10px] text-gray-500 normal-case ml-1">${l.nomor_pelanggan_arena || ''}</span></p>
+                    <div class="flex justify-between items-end mt-2">
+                        <div class="flex flex-col items-start">
+                            <span class="text-[11px] font-semibold text-gray-700 bg-gray-200 px-2 py-0.5 rounded ${txtClass}">${l.paket_arena}</span>
+                            <div class="mt-1">${oLbl}</div>
+                        </div>
+                        <span class="text-base font-black text-orange-600 ${txtClass}">${APP.formatRp(l.tagihan_arena)}</span>
+                    </div>
+                    
+                    <div class="flex gap-2 mt-3 pt-3 border-t-2 border-gray-200">
+                        <select data-old-value="${stat}" onchange="APP.handleStatusChange(this, '${rId}', '${pay}', '${l.unit_arena}')" class="mario-input p-1.5 text-[10px] w-1/3 font-bold cursor-pointer">
+                            <option value="booked" ${stat==='booked'?'selected':''}>BOOKED</option>
+                            <option value="playing" ${stat==='playing'?'selected':''}>PLAYING</option>
+                            <option value="finished" ${stat==='finished'?'selected':''}>FINISHED</option>
+                            <option value="batal" ${stat==='batal'?'selected':''}>BATAL ❌</option>
+                        </select>
+                        <button onclick="APP.handlePaymentClick('${rId}', '${stat}', '${pay}', '${l.unit_arena}')" class="mario-btn p-1.5 text-[10px] w-1/3 border-2 ${payClass} shadow-sm">${payTxt}</button>
+                        <a href="${wLink}" target="_blank" class="mario-btn p-1.5 text-[11px] w-1/3 bg-[#25D366] text-white flex items-center justify-center font-black border-2 border-green-800 shadow-sm">💬 WA</a>
+                    </div>
+                </div>`;
+            },
+
+            // Modal Handlers (Quick Fix)
+            closeModal: (id) => { document.getElementById(id).classList.add('hidden'); },
+            toggleCancelOther: () => { document.getElementById('cancel-other').classList.toggle('hidden', document.getElementById('cancel-reason').value !== 'Lainnya'); },
+            showCancelModal: (id, pay, unit) => { STATE.activeModalRowId = id; STATE.activeModalPay = pay; STATE.activeModalUnit = unit || '1'; document.getElementById('cancel-reason').value = 'Telat Respon'; document.getElementById('cancel-other').value = ''; document.getElementById('cancel-other').classList.add('hidden'); document.getElementById('modal-cancel').classList.remove('hidden'); },
+            confirmCancel: async () => { 
+                let r = document.getElementById('cancel-reason').value; if (r === 'Lainnya') r = document.getElementById('cancel-other').value || 'Alasan tidak disebutkan'; 
+                APP.closeModal('modal-cancel'); APP.showLoader('MEMBATALKAN...'); 
+                await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: 'batal', pembayaran: STATE.activeModalPay, unit: STATE.activeModalUnit || '1', admin_name: STATE.user.username, keterangan: r }); 
+                await APP.loadDashboard(); 
+            },
+            handleStatusChange: (selectEl, id, pay, unit) => { 
+                const newVal = selectEl.value; 
+                if (newVal === 'batal') { selectEl.value = selectEl.getAttribute('data-old-value'); APP.showCancelModal(id, pay, unit); } 
+                else { APP.showLoader('UPDATE STATUS...'); APP.api({ action: 'update_status', row_id: id, status_unit: newVal, pembayaran: pay, unit: unit, admin_name: STATE.user.username, keterangan: '' }).then(() => APP.loadDashboard()); } 
+            },
+            handlePaymentClick: (id, currentStat, currentPay, currentUnit) => { 
+                if (currentPay === 'Belum' || !currentPay || currentPay === 'undefined') { STATE.activeModalRowId = id; STATE.activeModalStat = currentStat; STATE.activeModalUnit = currentUnit; document.getElementById('modal-payment').classList.remove('hidden'); } 
+                else { APP.showLoader('UPDATE BAYAR...'); APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: 'Belum', unit: currentUnit, admin_name: STATE.user.username, keterangan: '' }).then(() => APP.loadDashboard()); } 
+            },
+            confirmPayment: async (method) => { APP.closeModal('modal-payment'); APP.showLoader('UPDATE BAYAR...'); await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: STATE.activeModalStat, pembayaran: `Lunas ${method}`, unit: STATE.activeModalUnit, admin_name: STATE.user.username, keterangan: '' }); await APP.loadDashboard(); },
+
+
+            // =====================================
+            // 2. FORM INPUT BIAYA (EXPENSES)
+            // =====================================
+            renderExpenseForm: () => {
+                const monthStr = APP.getMonthStr();
+                const currentMonthExps = STATE.expenses.filter(e => { const d = (e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran || '').substring(0,7); return d === monthStr; });
+                
+                let expListHtml = currentMonthExps.map(e => `
+                    <div class="bg-white border-2 border-black p-4 rounded-xl flex justify-between items-center shadow-[4px_4px_0px_#000] mb-3 text-left hover:translate-x-1 hover:-translate-y-1 transition-transform">
+                        <div>
+                            <p class="font-black text-sm uppercase text-gray-800">${e.pengeluaran_arena || e.pengeluaran}</p>
+                            <p class="text-[10px] font-bold text-gray-500 mt-1 bg-gray-100 px-2 py-0.5 rounded inline-block">${e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran} | ${e.cabang_id_arena || e.cabang}</p>
+                        </div>
+                        <p class="font-black text-red-600 text-lg">-${APP.formatRp(e.jumlah_pengeluaran_arena || e.jumlah_pengeluaran)}</p>
+                    </div>
+                `).join('') || '<p class="text-sm font-bold text-gray-500 text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">Belum ada pengeluaran bulan ini.</p>';
+
+                return `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+                    <div class="mario-card p-6 md:p-8 animate-pop h-fit">
+                        <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-xl uppercase">INPUT PENGELUARAN</h2>
+                        <form onsubmit="APP.saveExpense(event)" class="space-y-5">
+                            <div>
+                                <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Cabang</label>
+                                <select id="exp-branch" class="mario-input p-3 border-gray-400">
+                                    <option value="Banda">Banda Aceh</option><option value="Sabang">Sabang</option><option value="Aceh Timur">Aceh Timur</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Nama Item / Keperluan</label>
+                                <input type="text" id="exp-name" placeholder="Contoh: Bayar Listrik" required class="mario-input p-3">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-red-600 uppercase mb-1 block">Nominal (Rp)</label>
+                                <input type="number" id="exp-amount" placeholder="0" required min="1" class="mario-input p-3 border-red-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Tanggal</label>
+                                <input type="date" id="exp-date" required class="mario-input p-3" value="${APP.getTodayStr()}">
+                            </div>
+                            <button type="submit" class="w-full mario-btn bg-red-600 text-white p-5 mt-6 text-lg font-black uppercase shadow-[4px_4px_0px_#991b1b] border-red-900 hover:bg-red-500">SIMPAN BIAYA 💸</button>
+                        </form>
+                    </div>
+                    <div class="mario-card p-6 md:p-8 animate-pop h-fit bg-gray-50">
+                        <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-red-600 uppercase text-xl">LOG BIAYA (${monthStr})</h2>
+                        <div class="max-h-[500px] overflow-y-auto custom-scroll pr-3">
+                            ${expListHtml}
+                        </div>
+                    </div>
+                </div>`;
+            },
+            
+            saveExpense: async (e) => { 
+                e.preventDefault(); 
+                APP.showLoader('MENYIMPAN DATA...'); 
+                await APP.api({ 
+                    action: 'add_expense', 
+                    expense_name: document.getElementById('exp-name').value, 
+                    expense_amount: document.getElementById('exp-amount').value, 
+                    expense_date: document.getElementById('exp-date').value, 
+                    branch: document.getElementById('exp-branch').value 
+                }); 
+                await APP.loadDashboard(); 
+            },
+
+
+            // =====================================
+            // 3. FINANCIAL CALCULATOR & REPORTS
+            // =====================================
+            calculateFinancials: (monthStr) => {
+                let fin = {
+                    ALL: { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], dimas_total: 0, dp_total: 0 },
+                    'Banda': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.4, sh_cut: 0, dp_fee: 0, dp_comm: 0 },
+                    'Sabang': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0 },
+                    'Aceh Timur': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0 }
+                };
+
+                // 1. Rekap Pemasukan
+                STATE.logs.forEach(l => {
+                    let stat = String(l.status_unit_arena).toLowerCase();
+                    if (['batal', 'pending', 'maintenance'].includes(stat)) return;
+
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    if (safeDate.substring(0, 7) !== monthStr) return;
+
+                    let bRaw = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
+                    let b = fin[bRaw] ? bRaw : 'Banda';
+
+                    let val = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
+                    l.final_val = val;
+                    l.proper_branch = b;
+
+                    fin.ALL.gross += val;
+                    fin[b].gross += val;
+
+                    let ch = String(l.book_channel || '').toLowerCase();
+                    if (ch.includes('web') || ch.includes('auto')) {
+                        fin.ALL.booking_mandiri++; fin[b].booking_mandiri++;
+                    } else {
+                        fin.ALL.booking_manual++; fin[b].booking_manual++;
+                    }
+
+                    fin.ALL.order_logs.push(l);
+                    fin[b].order_logs.push(l);
+                });
+
+                // 2. Rekap Pengeluaran
+                STATE.expenses.forEach(e => {
+                    let d = (e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran || '');
+                    if (d.substring(0, 7) !== monthStr) return;
+
+                    let bRaw = e.cabang_id_arena || e.cabang;
+                    let b = fin[bRaw] ? bRaw : 'Banda';
+                    let val = Number(e.jumlah_pengeluaran_arena || e.jumlah_pengeluaran) || 0;
+
+                    e.proper_branch = b;
+                    fin.ALL.expense += val;
+                    fin[b].expense += val;
+
+                    fin.ALL.exp_logs.push(e);
+                    fin[b].exp_logs.push(e);
+                });
+
+                // 3. Kalkulasi Net & Shareholder
+                ['Banda', 'Sabang', 'Aceh Timur'].forEach(b => {
+                    fin[b].dp_fee = 0; fin[b].dp_comm = 0;
+                    let dpAmount = fin[b].dp_fee + fin[b].dp_comm;
+                    fin.ALL.dp_total += dpAmount;
+
+                    fin[b].net = fin[b].gross - fin[b].expense - dpAmount;
+                    fin[b].sh_cut = fin[b].net > 0 ? fin[b].net * fin[b].sh_pct : 0;
+                    fin.ALL.net += fin[b].net;
+                });
+
+                fin.ALL.dimas_total = fin.ALL.net - (fin['Banda'].sh_cut + fin['Sabang'].sh_cut + fin['Aceh Timur'].sh_cut);
+
+                return fin;
+            },
+
+            renderReportTab: () => {
+                return `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+                    <div class="mario-card p-6 animate-pop h-fit lg:col-span-1 bg-gray-50">
+                        <h2 class="font-black text-center border-b-2 border-black pb-3 mb-5 text-lg uppercase">Navigasi Laporan</h2>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-xs font-bold uppercase text-gray-600 block mb-1">Pilih Periode Bulan</label>
+                                <select id="report-month" onchange="APP.updateReportPreview()" class="mario-input p-3 border-gray-400">
+                                    ${APP.generateMonthOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold uppercase text-gray-600 block mb-1">Pilih Jenis Dokumen</label>
+                                <select id="report-type" onchange="APP.updateReportPreview()" class="mario-input p-3 font-bold text-blue-800 border-blue-400 focus:border-blue-600">
+                                    <option value="ALL">Laporan Global (Semua Cabang)</option>
+                                    <option value="Banda">Laporan Cabang Banda Aceh</option>
+                                    <option value="Sabang">Laporan Cabang Sabang</option>
+                                    <option value="Aceh Timur">Laporan Cabang Aceh Timur</option>
+                                    <option value="SHAREHOLDER" class="bg-yellow-100">💰 Ringkasan Bagi Hasil</option>
+                                    <option value="SH_NIBRAS">Slip Dividen: NIBRAS (Banda)</option>
+                                    <option value="SH_BLOK">Slip Dividen: BLOK (Sabang)</option>
+                                    <option value="SH_FARID">Slip Dividen: FARID (Atim)</option>
+                                    <option value="SH_DIMAS">Slip Dividen: DIMAS (Global)</option>
+                                </select>
+                            </div>
+                            <button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-5 mt-6 text-lg font-black uppercase tracking-widest shadow-[6px_6px_0px_#FFD700] hover:bg-gray-800">🖨️ CETAK DOKUMEN</button>
+                        </div>
+                    </div>
+                    <div class="mario-card p-6 animate-pop lg:col-span-2">
+                        <h2 class="font-black text-center border-b-2 border-black pb-3 mb-5 text-lg uppercase text-gray-500">Preview Data Laporan</h2>
+                        <div id="report-preview" class="w-full text-center"></div>
+                    </div>
+                </div>`;
+            },
+
+            updateReportPreview: () => {
+                const type = document.getElementById('report-type').value; 
+                const month = document.getElementById('report-month').value; 
+                const fin = APP.calculateFinancials(month);
+                
+                let html = '';
+                if (type === 'SHAREHOLDER') {
+                    html = `
+                        <div class="bg-black text-white p-6 rounded-2xl mb-6 shadow-[6px_6px_0px_#000]">
+                            <p class="text-xs font-bold text-gray-400 tracking-widest uppercase">TOTAL LABA BERSIH ARENA (GLOBAL)</p>
+                            <p class="text-4xl md:text-5xl font-black text-green-400 mt-2">${APP.formatRp(fin.ALL.net)}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                            <div class="bg-white p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_#000]">
+                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-wider">NIBRAS (BANDA 40%)</p>
+                                <p class="font-black text-[#FF6B00] text-xl mt-1">${APP.formatRp(fin['Banda'].sh_cut)}</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_#000]">
+                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-wider">BLOK (SABANG 50%)</p>
+                                <p class="font-black text-[#FF6B00] text-xl mt-1">${APP.formatRp(fin['Sabang'].sh_cut)}</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_#000]">
+                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-wider">FARID (ATIM 50%)</p>
+                                <p class="font-black text-[#FF6B00] text-xl mt-1">${APP.formatRp(fin['Aceh Timur'].sh_cut)}</p>
+                            </div>
+                            <div class="bg-yellow-100 p-4 rounded-xl border-2 border-yellow-500 shadow-[4px_4px_0px_#eab308]">
+                                <p class="text-[10px] font-black text-yellow-800 uppercase tracking-wider">DIMAS (SISA AKUMULASI)</p>
+                                <p class="font-black text-green-600 text-xl mt-1">${APP.formatRp(fin.ALL.dimas_total)}</p>
+                            </div>
+                        </div>`;
+                } else if (type.startsWith('SH_')) {
+                    let targetBranch = type === 'SH_NIBRAS' ? 'Banda' : (type === 'SH_BLOK' ? 'Sabang' : (type === 'SH_FARID' ? 'Aceh Timur' : 'ALL'));
+                    let targetName = type.replace('SH_', ''); 
+                    let targetCut = type === 'SH_DIMAS' ? fin.ALL.dimas_total : fin[targetBranch].sh_cut;
+                    
+                    html = `
+                        <div class="bg-blue-50 border-4 border-blue-500 p-6 md:p-8 rounded-2xl shadow-[6px_6px_0px_#3b82f6] text-left max-w-lg mx-auto">
+                            <p class="font-black text-base text-blue-800 mb-2 border-b-2 border-blue-200 pb-2">📄 PREVIEW SLIP DIVIDEN</p>
+                            <p class="text-xs font-bold text-gray-600 mb-6 uppercase tracking-wider">PENERIMA: <span class="text-black ml-1 text-lg">${targetName}</span></p>
+                            
+                            <div class="bg-white p-5 rounded-xl border-2 border-gray-300">
+                                <p class="text-xs font-bold text-gray-500 uppercase">TOTAL DITRANSFER:</p>
+                                <p class="text-4xl font-black text-green-600 mt-1">${APP.formatRp(targetCut)}</p>
+                            </div>
+                            
+                            <p class="text-[10px] font-bold text-gray-400 mt-4 italic text-center">*Klik tombol Cetak untuk PDF Slip beserta Rincian Transaksi</p>
+                        </div>`;
+                } else {
+                    let bData = type === 'ALL' ? fin.ALL : fin[type];
+                    let dpInfo = type === 'Banda' ? '' : `<p class="text-xs font-bold text-gray-500 border-t-2 border-dashed border-gray-300 pt-3 mt-3 flex justify-between"><span>Biaya Sistem (Drop Point):</span> <span class="text-red-500 font-black">-${APP.formatRp(type === 'ALL' ? fin.ALL.dp_total : fin[type].dp_fee + fin[type].dp_comm)}</span></p>`;
+                    let totalBookings = bData.booking_mandiri + bData.booking_manual; 
+                    let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0; 
+                    let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
+                    
+                    html = `
+                        <div class="space-y-4 text-left">
+                            <div class="bg-green-50 p-5 rounded-xl border-2 border-black flex justify-between items-center shadow-[4px_4px_0px_#000]">
+                                <span class="font-black text-sm uppercase text-gray-600">Omset Kotor</span>
+                                <span class="font-black text-green-600 text-2xl">${APP.formatRp(bData.gross)}</span>
+                            </div>
+                            
+                            <div class="bg-red-50 p-5 rounded-xl border-2 border-black flex flex-col shadow-[4px_4px_0px_#000]">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-black text-sm uppercase text-gray-600">Total Pengeluaran Manual</span>
+                                    <span class="font-black text-red-600 text-xl">-${APP.formatRp(bData.expense)}</span>
+                                </div>
+                                ${dpInfo}
+                            </div>
+
+                            <div class="bg-black text-white p-6 rounded-2xl border-4 border-yellow-400 flex justify-between items-center shadow-[6px_6px_0px_#000] mt-6">
+                                <span class="font-black text-base uppercase text-yellow-400 tracking-widest">Laba Bersih</span>
+                                <span class="font-black text-3xl md:text-4xl text-green-400">${APP.formatRp(bData.net)}</span>
+                            </div>
+
+                            <div class="bg-blue-50 border-2 border-blue-400 p-5 rounded-xl mt-6 shadow-[4px_4px_0px_#3b82f6]">
+                                <p class="font-black text-xs text-blue-800 uppercase mb-3 border-b border-blue-200 pb-2">📊 Rasio Sumber Booking</p>
+                                <div class="flex justify-between text-xs font-bold mb-2">
+                                    <span class="text-indigo-600">Web/Mandiri: ${pctMandiri}%</span>
+                                    <span class="text-gray-600">Admin: ${pctManual}%</span>
+                                </div>
+                                <div class="w-full bg-gray-300 rounded-full h-4 overflow-hidden flex border border-gray-400">
+                                    <div class="bg-indigo-500 h-full" style="width: ${pctMandiri}%"></div>
+                                    <div class="bg-gray-500 h-full" style="width: ${pctManual}%"></div>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-3 font-bold text-center">${bData.booking_mandiri} trx Mandiri (Otomatis) | ${bData.booking_manual} trx Kasir Admin</p>
+                            </div>
+                        </div>`;
+                }
+                document.getElementById('report-preview').innerHTML = html;
+            },
+
+            printReport: () => {
+                const type = document.getElementById('report-type').value; 
+                const month = document.getElementById('report-month').value; 
+                const monthLabel = document.getElementById('report-month').options[document.getElementById('report-month').selectedIndex].text; 
+                const fin = APP.calculateFinancials(month); 
+                const printDate = new Date().toLocaleString('id-ID'); 
+                const slipId = `SLP-${Date.now().toString().slice(-6)}`;
+                
+                let printHtml = `<div style="font-family: Arial, sans-serif; color: #000; padding: 0 10px; max-width: 100%;"><div style="text-align:center; margin-bottom:20px;"><h1 style="font-size:22px; margin:0; text-transform:uppercase; font-weight:900;">ARENA PLAYBOX</h1>${type.startsWith('SH_') ? `<h2 style="font-size:14px; margin:5px 0 0 0; color:#4b5563;">SLIP BAGI HASIL SHAREHOLDER</h2>` : `<h2 style="font-size:14px; margin:5px 0 0 0; color:#4b5563;">LAPORAN KEUANGAN & OPERASIONAL</h2>`}</div>`;
+
+                if (type === 'SHAREHOLDER') {
+                    printHtml += `
+                    <h3 style="font-size:14px; border-bottom:2px solid #000; padding-bottom:5px;">Periode: ${monthLabel}</h3>
+                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:13px; margin-bottom:20px; border: 2px solid #000;">
+                        <tr style="background:#f3f4f6;"><th style="border:1px solid #000; padding:10px;">Cabang</th><th style="border:1px solid #000; padding:10px; text-align:right;">Laba Bersih (Net)</th><th style="border:1px solid #000; padding:10px;">Shareholder</th><th style="border:1px solid #000; padding:10px; text-align:right;">Jatah (IDR)</th></tr>
+                        <tr><td style="border:1px solid #000; padding:10px; font-weight:bold;">Banda Aceh</td><td style="border:1px solid #000; padding:10px; text-align:right;">${APP.formatRp(fin['Banda'].net)}</td><td style="border:1px solid #000; padding:10px;">Nibras (40%)</td><td style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; color:#d97706;">${APP.formatRp(fin['Banda'].sh_cut)}</td></tr>
+                        <tr><td style="border:1px solid #000; padding:10px; font-weight:bold;">Sabang</td><td style="border:1px solid #000; padding:10px; text-align:right;">${APP.formatRp(fin['Sabang'].net)}</td><td style="border:1px solid #000; padding:10px;">Blok (50%)</td><td style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; color:#d97706;">${APP.formatRp(fin['Sabang'].sh_cut)}</td></tr>
+                        <tr><td style="border:1px solid #000; padding:10px; font-weight:bold;">Aceh Timur</td><td style="border:1px solid #000; padding:10px; text-align:right;">${APP.formatRp(fin['Aceh Timur'].net)}</td><td style="border:1px solid #000; padding:10px;">Farid (50%)</td><td style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; color:#d97706;">${APP.formatRp(fin['Aceh Timur'].sh_cut)}</td></tr>
+                        <tr style="background:#000; color:#FFD700;"><td colspan="3" style="border:1px solid #000; padding:12px; font-weight:900; text-align:right;">JATAH DIMAS (AKUMULASI SISA)</td><td style="border:1px solid #000; padding:12px; text-align:right; font-weight:900; font-size:16px;">${APP.formatRp(fin.ALL.dimas_total)}</td></tr>
+                    </table>
+                    <p style="font-size:11px; color:#555; font-style:italic; margin-top:20px;">*Laba bersih dihitung setelah pemotongan operasional manual dan biaya Drop Point (Khusus Sabang & Atim).</p>`;
+                } else if (type.startsWith('SH_')) {
+                    let targetBranch = type === 'SH_NIBRAS' ? 'Banda' : (type === 'SH_BLOK' ? 'Sabang' : (type === 'SH_FARID' ? 'Aceh Timur' : 'ALL'));
+                    let shName = type.replace('SH_', ''); 
+                    let bData = type === 'SH_DIMAS' ? fin.ALL : fin[targetBranch]; 
+                    let shCut = type === 'SH_DIMAS' ? fin.ALL.dimas_total : bData.sh_cut; 
+                    let shPct = type === 'SH_DIMAS' ? 'Sisa Akumulasi Seluruh Cabang' : `${bData.sh_pct * 100}% dari Laba Bersih`; 
+                    let dpAmount = type === 'SH_DIMAS' ? fin.ALL.dp_total : (bData.dp_fee + bData.dp_comm);
+                    
+                    printHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:2px solid #000; padding-bottom:10px;">
+                        <div><p style="margin:2px 0; font-size:12px;"><b>No. Referensi:</b> ${slipId}</p><p style="margin:2px 0; font-size:12px;"><b>Tanggal Cetak:</b> ${printDate}</p><p style="margin:2px 0; font-size:12px;"><b>Periode:</b> ${monthLabel}</p></div>
+                        <div style="text-align:right;"><p style="margin:2px 0; font-size:14px;">Penerima: <b>${shName}</b></p><p style="margin:2px 0; font-size:12px;">Cabang: <b>${targetBranch === 'Banda' ? 'Banda Aceh' : targetBranch}</b></p><p style="margin:2px 0; font-size:12px;">Porsi Bagi Hasil: <b>${shPct}</b></p></div>
+                    </div>`;
+                    
+                    printHtml += `
+                    <div style="border: 2px solid #000; padding:15px; background:#f9fafb; margin-bottom:20px; border-radius:8px;">
+                        <h3 style="margin-top:0; font-size:13px; text-transform:uppercase;">Ringkasan Keuangan (${targetBranch})</h3>
+                        <table style="width:100%; font-size:13px; margin-bottom:10px;">
+                            <tr><td style="padding:4px 0;">Omset Kotor (Termasuk Ongkir)</td><td style="text-align:right;">${APP.formatRp(bData.gross)}</td></tr>
+                            <tr><td style="padding:4px 0;">Total Pengeluaran Manual</td><td style="text-align:right; color:red;">-${APP.formatRp(bData.expense)}</td></tr>
+                            <tr><td style="padding:4px 0;">Biaya Sistem & Drop Point</td><td style="text-align:right; color:red;">-${APP.formatRp(dpAmount)}</td></tr>
+                            <tr><td colspan="2"><hr style="border-top:1px dashed #ccc; margin:5px 0;"></td></tr>
+                            <tr><td style="padding:4px 0; font-weight:bold;">Laba Bersih Keseluruhan</td><td style="text-align:right; font-weight:bold;">${APP.formatRp(bData.net)}</td></tr>
+                        </table>
+                        <div style="background:#000; color:#fff; padding:15px; text-align:center; border-radius:6px; margin-top:15px;">
+                            <p style="margin:0; font-size:11px; color:#ccc; text-transform:uppercase; letter-spacing:1px;">Total Dividen Ditransfer Ke ${shName}</p>
+                            <p style="margin:5px 0 0 0; font-size:22px; font-weight:900; color:#4ade80;">${APP.formatRp(shCut)}</p>
+                        </div>
+                    </div>`;
+                    
+                    printHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-top:20px; margin-bottom: 20px; font-size:12px;">
+                        <div style="text-align:center; width:200px;"><p style="margin-bottom:50px;">Disiapkan Oleh,</p><p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">${STATE.user.username.toUpperCase()}</p><p style="margin:0;">Arena System Manager</p></div>
+                        <div style="text-align:center; width:200px;"><p style="margin-bottom:50px;">Diterima Oleh,</p><p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">${shName.toUpperCase()}</p><p style="margin:0;">Shareholder</p></div>
+                    </div><div class="page-break"></div>`;
+
+                    let expRows = ''; 
+                    bData.exp_logs.forEach(e => { 
+                        let bLabel = targetBranch === 'ALL' ? `(${e.proper_branch}) ` : ''; 
+                        expRows += `<tr><td style="border:1px solid #ccc; padding:4px;">${e.tanggal_pengeluaran_arena||e.tanggal_pengeluaran||'-'}</td><td style="border:1px solid #ccc; padding:4px;">${bLabel}${e.pengeluaran_arena}</td><td style="border:1px solid #ccc; padding:4px; text-align:right;">${APP.formatRp(e.jumlah_pengeluaran_arena||e.jumlah_pengeluaran)}</td></tr>`; 
+                    });
+                    printHtml += `<h4 style="margin-bottom:5px; font-size:12px; margin-top:0;">LAMPIRAN 1: Rincian Pengeluaran</h4><table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:15px;"><tr style="background:#eee;"><th style="border:1px solid #ccc; padding:4px; text-align:left;">Tanggal</th><th style="border:1px solid #ccc; padding:4px; text-align:left;">Deskripsi</th><th style="border:1px solid #ccc; padding:4px; text-align:right;">Nominal</th></tr>${expRows || '<tr><td colspan="3" style="text-align:center; padding:4px;">Tidak ada pengeluaran manual.</td></tr>'}</table>`;
+
+                    let orderRows = ''; 
+                    bData.order_logs.forEach(l => { 
+                        let bLabel = targetBranch === 'ALL' ? `(${l.proper_branch}) ` : ''; 
+                        let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : ''); 
+                        orderRows += `<tr><td style="border:1px solid #ccc; padding:4px;">${safeDate.substring(0,10)}</td><td style="border:1px solid #ccc; padding:4px;">${bLabel}U${l.unit_arena} - ${l.nama_pelanggan_arena}</td><td style="border:1px solid #ccc; padding:4px;">${l.paket_arena}</td><td style="border:1px solid #ccc; padding:4px; text-align:right;">${APP.formatRp(l.final_val)}</td></tr>`; 
+                    });
+                    printHtml += `<h4 style="margin-bottom:5px; font-size:12px;">LAMPIRAN 2: Log Transaksi Sukses</h4><table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:20px;"><tr style="background:#eee;"><th style="border:1px solid #ccc; padding:4px; text-align:left;">Tanggal</th><th style="border:1px solid #ccc; padding:4px; text-align:left;">Unit & Pelanggan</th><th style="border:1px solid #ccc; padding:4px; text-align:left;">Paket</th><th style="border:1px solid #ccc; padding:4px; text-align:right;">Total Tagihan</th></tr>${orderRows || '<tr><td colspan="4" style="text-align:center; padding:4px;">Tidak ada transaksi.</td></tr>'}</table>`;
+                } else {
+                    printHtml += `<h2 style="text-align:center; font-size:14px; margin-bottom:20px; font-weight:normal; border-bottom:2px solid #000; padding-bottom:10px;">Periode: <b>${monthLabel}</b> | Cabang: <b>${type === 'ALL' ? 'Semua Cabang (Global)' : type}</b></h2>`;
+                    let bData = type === 'ALL' ? fin.ALL : fin[type]; 
+                    let dpAmount = type === 'ALL' ? fin.ALL.dp_total : (fin[type].dp_fee + fin[type].dp_comm); 
+                    let totalBookings = bData.booking_mandiri + bData.booking_manual; 
+                    let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0; 
+                    let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
+                    
+                    printHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <div style="width: 250px;">
+                            <h3 style="font-size:13px; text-transform:uppercase;">Rasio Booking</h3>
+                            <table style="width:100%; font-size:11px; margin-bottom:10px; border-collapse: collapse;">
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Web (Mandiri)</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right;">${bData.booking_mandiri} trx (${pctMandiri}%)</td></tr>
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Admin (Manual)</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right;">${bData.booking_manual} trx (${pctManual}%)</td></tr>
+                            </table>
+                        </div>
+                        <div style="width: 350px; border: 3px solid #000; padding: 15px; border-radius: 8px; background:#f9fafb;">
+                            <h3 style="font-size:14px; text-align:center; margin-top:0; margin-bottom:15px; text-transform:uppercase;">Kalkulasi Laba</h3>
+                            <table style="width:100%; font-size:12px;">
+                                <tr><td style="padding-bottom:5px;">Omset Kotor</td><td style="text-align:right; font-weight:bold; color:green; padding-bottom:5px;">${APP.formatRp(bData.gross)}</td></tr>
+                                <tr><td style="padding-bottom:5px;">Pengeluaran Manual</td><td style="text-align:right; font-weight:bold; color:red; padding-bottom:5px;">-${APP.formatRp(bData.expense)}</td></tr>
+                                <tr><td style="padding-bottom:10px;">Biaya Drop Point (Sistem)</td><td style="text-align:right; font-weight:bold; color:red; padding-bottom:10px;">-${APP.formatRp(dpAmount)}</td></tr>
+                                <tr><td colspan="2"><hr style="border-top:2px dashed #000; margin:0 0 10px 0;"></td></tr>
+                                <tr style="font-size:16px;"><td style="font-weight:900;">LABA BERSIH</td><td style="text-align:right; font-weight:900;">${APP.formatRp(bData.net)}</td></tr>
+                            </table>
+                        </div>
+                    </div>`;
+
+                    let rowHTML = ''; 
+                    bData.order_logs.forEach(l => { 
+                        let bLabel = type === 'ALL' ? `(${l.proper_branch}) ` : ''; 
+                        let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : ''); 
+                        rowHTML += `<tr><td style="border:1px solid #ccc; padding:4px;">${safeDate.substring(0,10)}</td><td style="border:1px solid #ccc; padding:4px;">${bLabel}U${l.unit_arena}</td><td style="border:1px solid #ccc; padding:4px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #ccc; padding:4px; text-align:right; font-weight:bold;">${APP.formatRp(l.final_val)}</td></tr>`; 
+                    });
+                    
+                    printHtml += `
+                    <h3 style="font-size:13px; margin-bottom:10px; border-bottom:2px solid #000; display:inline-block;">Rincian Log Transaksi</h3>
+                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:10px; margin-bottom:30px;">
+                        <tr style="background:#000; color:#fff;"><th style="border:1px solid #000; padding:6px;">Tanggal</th><th style="border:1px solid #000; padding:6px;">Unit</th><th style="border:1px solid #000; padding:6px;">Pelanggan</th><th style="border:1px solid #000; padding:6px; text-align:right;">Tagihan (+Ongkir)</th></tr>
+                        ${rowHTML || '<tr><td colspan="4" style="text-align:center; padding:10px;">Tidak ada transaksi di bulan ini.</td></tr>'}
+                    </table>
+                    <div style="text-align: right; font-size: 11px;">
+                        <p>Dicetak Oleh: <b>${STATE.user.username.toUpperCase()}</b></p>
+                        <p>Waktu Cetak: ${printDate}</p>
+                    </div>`;
+                }
+
+                printHtml += `
+                    <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: 'Inter', sans-serif;">
+                        <p style="font-size: 8px; color: #9ca3af; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">System By</p>
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/beuna-agency/main/beuna%20logo%20png.png" alt="Beuna Agency" style="height: 14px; opacity: 0.8; filter: grayscale(100%);">
+                    </div>
+                </div>`;
+                
+                document.getElementById('print-area').innerHTML = printHtml; 
+                document.getElementById('print-area').classList.remove('hidden'); 
+                window.print(); 
+                document.getElementById('print-area').classList.add('hidden');
+            }
+        };
+
+        window.onload = APP.init;
+    </script>
+</body>
+</html>
