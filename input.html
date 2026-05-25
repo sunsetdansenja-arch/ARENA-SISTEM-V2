@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - Input Transaksi</title>
+    
+    <link class="apple-touch-icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png">
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 12px; font-weight: 600; outline: none; }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
+        
+        #pc-nav { display: none; }
+        @media (min-width: 768px) {
+            #pc-nav { display: flex !important; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+            .bottom-nav-container { display: none !important; }
+            body { padding-bottom: 0 !important; } 
+            .header-container { flex-direction: column; align-items: stretch; }
+            .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        }
+
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body class="pb-24 md:pb-0">
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        if (!session || session.role !== 'manager') { 
+            window.location.href = 'index.html'; 
+        }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
+    </div>
+
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto header-container">
+            <div class="header-top-row flex justify-between items-center gap-4">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-8 w-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-black text-white leading-none">ARENA MANAGER</h1>
+                        <p id="user-info-text" class="text-[9px] font-bold text-yellow-400 uppercase tracking-widest mt-1">INPUT SYSTEM</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 w-auto justify-end">
+                    <button onclick="APP.logout()" class="bg-red-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs">🚪 <span class="hidden md:inline">LOGOUT</span></button>
+                </div>
+            </div>
+
+            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full">
+                <button onclick="window.location.href='god.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">👑 GOD</button>
+                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">💬 MIRROR</button>
+                <button onclick="window.location.href='logs.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">🎮 LOGS</button>
+                <button onclick="window.location.href='input.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">📝 INPUT</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="app" class="w-full max-w-4xl mx-auto p-4 md:p-6 mt-2 animate-pop">
+        <div id="main-content" class="w-full mx-auto"></div>
+    </main>
+
+    <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 25px; scroll-behavior: smooth;">
+            <div onclick="window.location.href='god.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">👑</span>GOD
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+            <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        const CONFIG = {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
+            PRICING: {
+                Paket: [ 
+                    { name: "Malam", price: 50000 }, { name: "Pagi", price: 45000 }, { name: "Sore", price: 45000 }, { name: "Sultan 24H", price: 115000 } 
+                ],
+                Regular: [ 
+                    { name: "3 Jam", price: 30000 }, { name: "4 Jam", price: 40000 }, { name: "5 Jam", price: 50000 } 
+                ]
+            },
+            UNITS: [ 
+                { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, 
+                { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
+            ]
+        };
+
+        const STATE = { 
+            user: session, 
+            logs: [], 
+            lastFinalPrice: 0
+        };
+
+        const APP = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | SYSTEM MANAGER`;
+                APP.loadDashboard();
+            },
+            showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
+            hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
+            logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return null; }
+            },
+
+            loadDashboard: async () => {
+                APP.showLoader('SINKRONISASI UNIT...');
+                // Perlu fetch dashboard agar kita bisa mengecek status unit mana yang terisi
+                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
+                APP.hideLoader();
+                let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; return d; }) : [];
+                STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
+                
+                document.getElementById('main-content').innerHTML = APP.renderInputForm();
+                APP.updateUnitOptions(); 
+                APP.updatePrice();
+            },
+
+            getUnitStatusRaw: (uNum) => {
+                const logs = STATE.logs.filter(l => String(l.unit_arena).replace(/\D/g, '') === String(uNum));
+                logs.sort((a,b) => new Date(String(b.jam_mulai_sewa || b.createdAt).replace(' ','T')) - new Date(String(a.jam_mulai_sewa || a.createdAt).replace(' ','T')));
+                return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
+            },
+
+            renderInputForm: () => {
+                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const minDate = now.toISOString().slice(0,16);
+                const maxD = new Date(now); maxD.setDate(maxD.getDate() + 7); 
+                const maxDate = maxD.toISOString().slice(0,16);
+                const b = STATE.user.branch || ''; 
+                
+                return `
+                <div class="mario-card p-5 md:p-8 w-full">
+                    <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-2xl uppercase">INPUT TRANSAKSI</h2>
+                    <form onsubmit="APP.saveRental(event)" class="space-y-6">
+                        
+                        <div class="bg-gray-50 border-2 border-gray-300 p-4 rounded-xl shadow-sm">
+                            <h3 class="font-bold text-xs uppercase text-gray-500 mb-3 tracking-widest border-b border-gray-200 pb-2">Informasi Pelanggan</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label class="text-xs font-bold uppercase mb-1 block">Nama Pelanggan</label><input type="text" id="r-name" required placeholder="Contoh: Budi Susanto" class="mario-input"></div>
+                                <div><label class="text-xs font-bold uppercase mb-1 block">Nomor WA</label><input type="number" id="r-wa" required placeholder="Contoh: 08123456789" class="mario-input"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-orange-50 border-2 border-orange-200 p-4 rounded-xl shadow-sm">
+                            <h3 class="font-bold text-xs uppercase text-orange-600 mb-3 tracking-widest border-b border-orange-200 pb-2">Detail Sewa</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="text-xs font-bold uppercase mb-1 block">Cabang</label>
+                                    <select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input border-orange-400">
+                                        <option value="Banda" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
+                                        <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
+                                        <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
+                                    </select>
+                                </div>
+                                <div><label class="text-xs font-bold uppercase mb-1 block">Pilih Unit (Hanya Kosong)</label><select id="r-unit" class="mario-input border-orange-400" required></select></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold uppercase mb-1 block text-blue-700">Waktu Main</label>
+                                    <input type="datetime-local" id="r-datetime" value="${minDate}" min="${minDate}" max="${maxDate}" onchange="APP.updateUnitOptions()" required class="mario-input border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold uppercase mb-1 block">Tipe Sewa</label>
+                                    <div class="flex gap-2">
+                                        <select id="r-type" onchange="APP.updatePrice()" class="mario-input w-1/3 text-xs md:text-sm">
+                                            <option value="Paket">Paket</option><option value="Regular">Regular</option>
+                                        </select>
+                                        <select id="r-prod" onchange="APP.updatePrice()" class="mario-input w-2/3 text-xs md:text-sm"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="logistik-admin-container" class="bg-[#FFE8B3] border-2 border-yellow-500 p-4 rounded-xl hidden shadow-sm">
+                            <h3 class="font-bold text-xs uppercase text-yellow-800 mb-3 tracking-widest border-b border-yellow-300 pb-2">Logistik (Khusus Banda Aceh)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label class="text-xs font-bold uppercase mb-1 block">Metode Pengiriman</label><select id="r-delivery" onchange="APP.updatePrice()" class="mario-input font-bold border-yellow-600"><option value="ambil">Ambil di Markas</option><option value="antar">Antar ke Lokasi</option></select></div>
+                                <div><label class="text-xs font-bold uppercase mb-1 block text-blue-700">Ongkir (Rp)</label><input type="number" id="r-ongkir" placeholder="0" min="0" value="0" onkeyup="APP.updatePrice()" onchange="APP.updatePrice()" class="mario-input border-blue-500 hidden"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 border-2 border-gray-300 p-4 rounded-xl shadow-sm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div><label class="text-xs font-bold text-red-600 uppercase mb-1 block">Diskon Tambahan (Rp)</label><input type="number" id="r-diskon" placeholder="Kosongkan jika tidak ada" min="0" onkeyup="APP.updatePrice()" onchange="APP.updatePrice()" class="mario-input border-red-500"></div>
+                                <div>
+                                    <label class="text-xs font-bold uppercase mb-1 block">Status Pembayaran</label>
+                                    <select id="r-pay-status" class="mario-input font-black text-gray-700 border-gray-400">
+                                        <option value="Belum">❌ Belum Bayar</option><option value="Lunas Cash">💵 Lunas (Cash)</option><option value="Lunas Transfer">📱 Lunas (Transfer)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bg-black text-yellow-400 p-5 rounded-xl text-center shadow-[4px_4px_0px_#FFD700] border-2 border-yellow-400 mt-6">
+                                <p class="text-xs font-bold text-gray-300 uppercase tracking-widest">Total Tagihan (Inc. Ongkir)</p>
+                                <p id="price-tag" class="text-4xl font-black mt-2">Rp 0</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full mario-btn bg-[#25D366] text-white p-5 text-xl font-black uppercase shadow-[4px_4px_0px_#166534] border-green-800 hover:bg-green-600 mt-4">SIMPAN TRANSAKSI 💾</button>
+                    </form>
+                </div>`;
+            },
+            
+            updateUnitOptions: () => {
+                const b = document.getElementById('r-branch').value; 
+                const logistikBox = document.getElementById('logistik-admin-container');
+                if(!document.getElementById('r-unit')) return;
+                
+                if (b === 'Banda') { logistikBox.classList.remove('hidden'); } 
+                else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
+
+                document.getElementById('r-unit').innerHTML = CONFIG.UNITS.filter(u => u.label.includes(b.toUpperCase().substring(0,4))).map(u => {
+                    const stat = APP.getUnitStatusRaw(u.id);
+                    if (stat === 'maintenance') return '';
+                    let label = `Unit ${u.id}`;
+                    if (['playing','main','booked','pending'].includes(stat)) label += ' 🔴 (Terisi)';
+                    else label += ' 🟢 (Kosong)';
+                    return `<option value="${u.id}">${label}</option>`;
+                }).join('');
+                
+                APP.updatePrice();
+            },
+
+            updatePrice: () => {
+                const t = document.getElementById('r-type').value; 
+                const p = document.getElementById('r-prod');
+                
+                const deliveryMode = document.getElementById('r-delivery') ? document.getElementById('r-delivery').value : 'ambil';
+                const ongkirInput = document.getElementById('r-ongkir');
+                if (ongkirInput) ongkirInput.classList.toggle('hidden', deliveryMode !== 'antar');
+                if (deliveryMode === 'ambil' && ongkirInput) ongkirInput.value = 0;
+
+                if(!p.options.length || document.getElementById('r-type').dataset.last !== t) { 
+                    p.innerHTML = CONFIG.PRICING[t].map((x,i) => `<option value="${i}">${x.name}</option>`).join(''); 
+                    document.getElementById('r-type').dataset.last = t; 
+                }
+                
+                const basePrice = CONFIG.PRICING[t][p.value].price;
+                const diskonVal = Number(document.getElementById('r-diskon') ? document.getElementById('r-diskon').value : 0) || 0;
+                const ongkirVal = Number(ongkirInput ? ongkirInput.value : 0) || 0;
+                
+                let finalCalc = basePrice - diskonVal + ongkirVal; 
+                if (finalCalc < 0) finalCalc = 0; 
+                
+                STATE.lastFinalPrice = finalCalc; 
+                document.getElementById('price-tag').innerText = APP.formatRp(finalCalc);
+            },
+
+            saveRental: async (e) => {
+                e.preventDefault(); 
+                APP.showLoader('MENYIMPAN KE SERVER...');
+                
+                try {
+                    const type = document.getElementById('r-type').value; 
+                    const prodSel = document.getElementById('r-prod');
+                    const rawDate = document.getElementById('r-datetime').value || ''; 
+                    const formattedDate = rawDate ? rawDate.replace('T', ' ') + (rawDate.length === 16 ? ':00' : '') : '';
+                    
+                    const finalName = CONFIG.PRICING[type][prodSel.value].name; 
+                    const diskonVal = Number(document.getElementById('r-diskon').value) || 0;
+                    let finalPaket = `${finalName} (${type})`; 
+                    if (diskonVal > 0) { finalPaket += ` [Diskon ${APP.formatRp(diskonVal)}]`; }
+
+                    await APP.api({ 
+                        action: 'input_rental', 
+                        name: document.getElementById('r-name').value, 
+                        wa: document.getElementById('r-wa').value, 
+                        branch: document.getElementById('r-branch').value, 
+                        unit: document.getElementById('r-unit').value, 
+                        price: STATE.lastFinalPrice, 
+                        admin_name: STATE.user.username, 
+                        status_unit: 'booked', 
+                        pembayaran: document.getElementById('r-pay-status').value, 
+                        paket: finalPaket, 
+                        jam_mulai_sewa: formattedDate, 
+                        ongkir: Number(document.getElementById('r-ongkir')?document.getElementById('r-ongkir').value:0) || 0, 
+                        book_channel: 'Manual (Admin)' 
+                    });
+                    
+                    // Alihkan user otomatis kembali ke logs setelah selesai input
+                    window.location.href = 'logs.html';
+                } catch (error) { 
+                    APP.hideLoader(); 
+                    alert("Gagal memproses input. Cek koneksi Anda.");
+                }
+            }
+        };
+
+        window.onload = APP.init;
+    </script>
+</body>
+</html>
