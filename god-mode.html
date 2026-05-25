@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - God Mode</title>
+    
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert(`🚨 CRASH DETECTED!\n\nPesan: ${message}\nBaris: ${lineno}\n\nScreenshot ini dan kirim ke developer!`);
+            document.getElementById('loader').classList.add('hidden');
+        };
+    </script>
+
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: #1a1a1a; color: white; -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(255,255,255,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: #262626; border: 4px solid var(--mario-yellow); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-yellow); color: white; }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; color: black; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        .mario-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .mario-input { width: 100%; background-color: #333; border: 3px solid var(--mario-yellow); border-radius: 8px; padding: 10px; font-weight: 600; color: white; outline: none; }
+        .mario-input:focus { background-color: #444; }
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid #333; border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        if (!session) { window.location.href = 'index.html'; }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-yellow-400 tracking-widest">SINKRONISASI DATA...</h2>
+    </div>
+
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4 w-full md:w-auto">
+                <div class="bg-yellow-400 p-2 rounded-lg border-2 border-white shadow-[2px_2px_0px_#fff]"><span class="text-xl">👑</span></div>
+                <div>
+                    <h1 class="text-xl font-black text-yellow-400 leading-none">GOD MODE</h1>
+                    <p id="user-info-text" class="text-[10px] font-bold text-white uppercase tracking-widest mt-1">SINKRONISASI...</p>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto justify-end">
+                <button onclick="window.history.back()" class="mario-btn bg-gray-200 text-black p-2 md:px-4 rounded-lg text-xs">⬅️ KEMBALI</button>
+                <button onclick="GOD.loadData()" class="bg-blue-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff]">🔄 REFRESH</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-7xl mx-auto p-4 md:p-6 mt-4 animate-pop">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 mario-card p-5 h-fit">
+                <h2 class="text-lg font-black border-b-4 border-yellow-400 pb-2 mb-4 text-yellow-400 uppercase">🔧 UNIT CONTROL</h2>
+                <div id="unit-list-container" class="space-y-3"></div>
+            </div>
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-black border-2 border-yellow-400 rounded-xl p-4 text-center shadow-[4px_4px_0px_#FFD700]">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Total Omset Kotor</p>
+                        <p id="kpi-total" class="text-2xl md:text-3xl font-black text-yellow-400 mt-1">Rp 0</p>
+                    </div>
+                    <div class="bg-black border-2 border-blue-500 rounded-xl p-4 text-center shadow-[4px_4px_0px_#3b82f6]">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Avg Harian</p>
+                        <p id="kpi-avg" class="text-2xl md:text-3xl font-black text-blue-400 mt-1">Rp 0</p>
+                    </div>
+                    <div class="bg-black border-2 border-green-500 rounded-xl p-4 text-center shadow-[4px_4px_0px_#10b981]">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Peak Day</p>
+                        <p id="kpi-best" class="text-2xl md:text-3xl font-black text-green-400 mt-1">Rp 0</p>
+                        <p id="kpi-best-date" class="text-[10px] font-bold text-green-600 mt-1">-</p>
+                    </div>
+                </div>
+                
+                <div class="mario-card p-5">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b-4 border-yellow-400 pb-2 gap-3">
+                        <h2 class="text-lg font-black uppercase text-yellow-400">📈 GRAFIK REVENUE</h2>
+                        <select id="month-filter" onchange="GOD.renderAnalytics()" class="mario-input w-full md:w-40 p-2 text-xs font-bold cursor-pointer text-black"></select>
+                    </div>
+                    <div class="h-[400px] w-full"><canvas id="revenueChart"></canvas></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mario-card p-4">
+                        <h2 class="text-sm font-black border-b-2 border-blue-500 pb-2 mb-3 text-blue-400 uppercase">🎉 CUSTOMER BARU (<span id="count-new">0</span>)</h2>
+                        <div class="max-h-[250px] overflow-y-auto custom-scroll">
+                            <table class="w-full text-left border-collapse text-xs text-gray-300">
+                                <thead><tr class="border-b border-gray-700 text-gray-400 font-bold uppercase text-[10px]"><th class="p-2">Nama</th><th class="p-2">Daerah</th><th class="p-2 text-right">Total (Rp)</th></tr></thead>
+                                <tbody id="body-new-customers"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mario-card p-4">
+                        <h2 class="text-sm font-black border-b-2 border-green-500 pb-2 mb-3 text-green-400 uppercase">🔥 PELANGGAN SETIA (<span id="count-returning">0</span>)</h2>
+                        <div class="max-h-[250px] overflow-y-auto custom-scroll">
+                            <table class="w-full text-left border-collapse text-xs text-gray-300">
+                                <thead><tr class="border-b border-gray-700 text-gray-400 font-bold uppercase text-[10px]"><th class="p-2">Nama</th><th class="p-2">Daerah</th><th class="p-2 text-center">Freq</th><th class="p-2 text-right">Total (Rp)</th></tr></thead>
+                                <tbody id="body-returning-customers"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CONFIG = {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1",
+            UNITS: [ { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } ],
+            TARGET_HARIAN: 400000
+        };
+
+        const STATE = { 
+            user: session || { username: 'Guest' }, 
+            logs: [], 
+            chartInstance: null 
+        };
+
+        const GOD = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `${String(STATE.user.username).toUpperCase()} | COMMAND CENTER`;
+                document.getElementById('month-filter').innerHTML = GOD.generateMonthOptions();
+                GOD.loadData();
+            },
+
+            showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
+            hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
+            getNowStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().replace('T', ' ').substring(0,19); },
+            
+            // Perbaikan Algoritma Bulan biar gak crash di akhir bulan
+            generateMonthOptions: () => {
+                const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                let opts = ''; 
+                let today = new Date();
+                let currentMonth = today.getMonth();
+                let currentYear = today.getFullYear();
+                
+                for(let i=0; i<6; i++) { 
+                    let targetMonth = currentMonth - i;
+                    let targetYear = currentYear;
+                    if (targetMonth < 0) {
+                        targetMonth += 12;
+                        targetYear -= 1;
+                    }
+                    let mStr = String(targetMonth + 1).padStart(2, '0');
+                    opts += `<option value="${targetYear}-${mStr}">${names[targetMonth]} ${targetYear}</option>`; 
+                }
+                return opts;
+            },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { 
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) 
+                    });
+                    if (!r.ok) return [];
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return []; }
+            },
+
+            loadData: async () => {
+                GOD.showLoader('MENARIK DATA SERVER...');
+                try {
+                    const res = await GOD.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
+                    let raw = Array.isArray(res) ? res.map((i, idx) => {
+                        let d = i.json !== undefined ? i.json : i; 
+                        if (i.id !== undefined && d.id === undefined) d.id = i.id; 
+                        d._dbIndex = idx; return d;
+                    }) : [];
+
+                    STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
+                    GOD.renderUnitControl();
+                    GOD.renderAnalytics();
+                } catch (error) {
+                    alert("Gagal memuat data dari n8n! Error: " + error.message);
+                } finally {
+                    GOD.hideLoader();
+                }
+            },
+
+            getUnitStatusRaw: (uNum) => {
+                const unitLogs = STATE.logs.filter(l => String(l.unit_arena || '').replace(/\D/g, '') === String(uNum));
+                unitLogs.sort((a, b) => {
+                    let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
+                    let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
+                    if (timeA !== timeB) return timeB - timeA;
+                    return (b._dbIndex || 0) - (a._dbIndex || 0);
+                });
+                return unitLogs.length > 0 ? String(unitLogs[0].status_unit_arena).toLowerCase() : 'kosong';
+            },
+
+            renderUnitControl: () => {
+                let mHtml = '';
+                CONFIG.UNITS.forEach(u => {
+                    const s = GOD.getUnitStatusRaw(u.id);
+                    const isM = s === 'maintenance'; 
+                    const isB = ['playing','main','booked','pending'].includes(s);
+                    
+                    mHtml += `
+                        <div class="flex items-center justify-between bg-black p-3 rounded-lg border-2 border-gray-600">
+                            <div>
+                                <p class="font-black text-sm uppercase text-white">U${u.id} <span class="bg-gray-700 text-white text-[9px] ml-1 px-1.5 rounded">${u.label}</span></p>
+                                <p class="text-[10px] font-bold mt-1 ${isM?'text-red-500':isB?'text-orange-400':'text-green-400'}">STATUS: ${s.toUpperCase()}</p>
+                            </div>
+                            <button onclick="GOD.toggleMaintenance(${u.id}, '${u.label}', ${!isM})" ${isB?'disabled':''} class="mario-btn p-2 text-[10px] font-black w-24 ${isM?'bg-green-400 text-black':'bg-red-600 text-white border-red-800'}">
+                                ${isM?'NORMALKAN':'SET MAINT'}
+                            </button>
+                        </div>`;
+                });
+                document.getElementById('unit-list-container').innerHTML = mHtml;
+            },
+
+            toggleMaintenance: async (id, branch, set) => {
+                const act = set ? 'KUNCI unit ini untuk MAINTENANCE' : 'KEMBALIKAN unit menjadi NORMAL';
+                if(!confirm(`Yakin ingin ${act}?`)) return;
+                
+                GOD.showLoader('MENGIRIM PERINTAH...');
+                let pb = branch === 'BANDA' ? 'Banda' : (branch === 'SABANG' ? 'Sabang' : 'Aceh Timur');
+                
+                await GOD.api({ 
+                    action: 'input_rental', name:'SYSTEM', wa:'0', branch: pb, unit: id, price: 0, 
+                    admin_name: 'SIMAS', status_unit: set?'maintenance':'finished', pembayaran: 'System', 
+                    paket: set?'MAINTENANCE':'Selesai Maint.', jam_mulai_sewa: GOD.getNowStr(), ongkir: 0, book_channel: 'GOD_MODE' 
+                });
+                await GOD.loadData();
+            },
+
+            renderAnalytics: () => {
+                const month = document.getElementById('month-filter').value;
+                if(!month) return; // Pengaman filter kosong
+                
+                let daily = {}; let totalM = 0; let peak = { v: 0, d: '-' };
+                let customerMap = {};
+
+                STATE.logs.forEach(l => {
+                    const s = String(l.status_unit_arena || '').toLowerCase(); 
+                    if(['batal','pending','maintenance'].includes(s)) return;
+                    
+                    const d = String(l.jam_mulai_sewa || l.createdAt || '').substring(0,10);
+                    if(!d || d.length < 7) return; // Pengaman data melompong
+                    
+                    const mStr = d.substring(0,7);
+                    
+                    if(d.startsWith(month)) {
+                        if(!daily[d]) daily[d] = { Banda:0, Sabang:0, Atim:0, Total:0 };
+                        const v = (Number(l.tagihan_arena)||0) + (Number(l.ongkir||l.ongkir_arena)||0);
+                        const b = String(l.cabang_arena || '').toLowerCase();
+                        
+                        if(b.includes('banda')) daily[d].Banda += v; 
+                        else if(b.includes('sabang')) daily[d].Sabang += v; 
+                        else daily[d].Atim += v;
+                        
+                        daily[d].Total += v; totalM += v; 
+                        if(daily[d].Total > peak.v) { peak.v = daily[d].Total; peak.d = d; }
+                    }
+
+                    let rawNum = String(l.nomor_pelanggan_arena || '').replace(/\D/g, '');
+                    if (rawNum) {
+                        let phone = rawNum.replace(/^0/, '62');
+                        let tagihan = (Number(l.tagihan_arena)||0) + (Number(l.ongkir||l.ongkir_arena)||0);
+                        let rawBranch = String(l.cabang_arena || 'Banda');
+                        let branch = (rawBranch.toLowerCase().includes('banda')) ? 'Banda' : (rawBranch.toLowerCase().includes('sabang') ? 'Sabang' : 'Aceh Timur');
+                        let name = l.nama_pelanggan_arena || 'Sultan';
+
+                        if (!customerMap[phone]) {
+                            customerMap[phone] = { firstMonth: mStr, name: name, branch: branch, spentThisMonth: 0, countThisMonth: 0 };
+                        } else {
+                            if (mStr < customerMap[phone].firstMonth) customerMap[phone].firstMonth = mStr;
+                        }
+
+                        if (mStr === month) {
+                            customerMap[phone].spentThisMonth += tagihan;
+                            customerMap[phone].countThisMonth += 1;
+                            if (l.nama_pelanggan_arena && l.nama_pelanggan_arena !== '?') customerMap[phone].name = l.nama_pelanggan_arena;
+                            customerMap[phone].branch = branch;
+                        }
+                    }
+                });
+
+                document.getElementById('kpi-total').innerText = GOD.formatRp(totalM);
+                document.getElementById('kpi-avg').innerText = GOD.formatRp(Object.keys(daily).length ? totalM/Object.keys(daily).length : 0);
+                document.getElementById('kpi-best').innerText = GOD.formatRp(peak.v);
+                document.getElementById('kpi-best-date').innerText = peak.v > 0 ? `Tercapai: ${peak.d}` : '-';
+
+                let newCustList = []; let retCustList = [];
+                Object.keys(customerMap).forEach(phone => {
+                    const c = customerMap[phone];
+                    if (c.countThisMonth > 0) {
+                        if (c.firstMonth === month) newCustList.push(c);
+                        else retCustList.push(c);
+                    }
+                });
+
+                newCustList.sort((a,b) => b.spentThisMonth - a.spentThisMonth);
+                retCustList.sort((a,b) => b.spentThisMonth - a.spentThisMonth);
+
+                document.getElementById('count-new').innerText = newCustList.length;
+                document.getElementById('count-returning').innerText = retCustList.length;
+
+                let htmlNew = '';
+                newCustList.forEach(c => {
+                    htmlNew += `<tr class="border-b border-gray-800 hover:bg-neutral-800"><td class="p-2 font-bold">${c.name}</td><td class="p-2"><span class="text-[9px] bg-blue-900/50 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800 font-bold uppercase">${c.branch}</span></td><td class="p-2 text-right font-mono text-yellow-400">${c.spentThisMonth.toLocaleString('id-ID')}</td></tr>`;
+                });
+                document.getElementById('body-new-customers').innerHTML = htmlNew || '<tr><td colspan="3" class="text-center p-4 text-gray-500">Gak ada customer baru.</td></tr>';
+
+                let htmlRet = '';
+                retCustList.forEach(c => {
+                    htmlRet += `<tr class="border-b border-gray-800 hover:bg-neutral-800"><td class="p-2 font-bold">${c.name}</td><td class="p-2"><span class="text-[9px] bg-emerald-900/50 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-800 font-bold uppercase">${c.branch}</span></td><td class="p-2 text-center"><span class="bg-blue-500 text-black px-2 py-0.5 text-[10px] font-black rounded-md shadow-[1px_1px_0px_#fff]">${c.countThisMonth}x</span></td><td class="p-2 text-right font-mono text-yellow-400">${c.spentThisMonth.toLocaleString('id-ID')}</td></tr>`;
+                });
+                document.getElementById('body-returning-customers').innerHTML = htmlRet || '<tr><td colspan="4" class="text-center p-4 text-gray-500">Gak ada repeat order.</td></tr>';
+
+                const dates = Object.keys(daily).sort();
+                const indonesianDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const labelsWithDay = dates.map(d => {
+                    const dateObj = new Date(d);
+                    return `${indonesianDays[dateObj.getDay()]}, ${d}`;
+                });
+                let dataTarget = dates.map(() => CONFIG.TARGET_HARIAN);
+
+                if (STATE.chartInstance) STATE.chartInstance.destroy();
+                
+                if (typeof Chart !== 'undefined') {
+                    const ctx = document.getElementById('revenueChart').getContext('2d');
+                    Chart.defaults.color = '#a3a3a3'; Chart.defaults.font.family = "'Inter', sans-serif";
+                    STATE.chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labelsWithDay,
+                            datasets: [
+                                { type:'line', label:'Target Harian', data: dataTarget, borderColor:'#ef4444', borderWidth:2, borderDash:[5,5], pointRadius:0, z: 10 },
+                                { label:'Banda Aceh', data: dates.map(d=>daily[d].Banda), backgroundColor:'#3b82f6', borderRadius: {topLeft:4, topRight:4} },
+                                { label:'Sabang', data: dates.map(d=>daily[d].Sabang), backgroundColor:'#a855f7', borderRadius: {topLeft:4, topRight:4} },
+                                { label:'Aceh Timur', data: dates.map(d=>daily[d].Atim), backgroundColor:'#10b981', borderRadius: {topLeft:4, topRight:4} }
+                            ]
+                        },
+                        options: { 
+                            responsive:true, maintainAspectRatio:false, interaction: { mode: 'index', intersect: false }, 
+                            scales: { x: { stacked: true, grid: { color: '#333' } }, y: { stacked: true, grid: { color: '#333' }, ticks: { callback: function(v) { return 'Rp ' + (v/1000) + 'k'; } } } },
+                            plugins: {
+                                legend: { labels: { color: 'white', font: { weight: 'bold' } } },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0,0,0,0.9)', titleColor: '#FFD700', bodyColor: 'white', borderColor: '#FFD700', borderWidth: 1, padding: 10,
+                                    callbacks: {
+                                        afterBody: function(ctx) {
+                                            if (ctx[0].dataset.type === 'line') return;
+                                            let t = 0; ctx.forEach(c => { if(c.dataset.type !== 'line') t += c.parsed.y; });
+                                            return `\nTOTAL OMSET: ${GOD.formatRp(t)}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        };
+
+        window.onload = GOD.init;
+    </script>
+</body>
+</html>
