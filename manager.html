@@ -3,139 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA MANAGER - Executive Dashboard</title>
+    <title>ARENA SYSTEM - Executive Dashboard</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f2f2f7; color: #1c1c1e; }
-        .apple-card { background: white; border-radius: 24px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.04), 0 2px 8px -2px rgba(0,0,0,0.02); }
-        .glass-header { background: rgba(242, 242, 247, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .menu-btn { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s; }
-        .menu-btn:active { transform: scale(0.96); box-shadow: none; }
-        .progress-bar-stripes { background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; animation: progress-animation 1s linear infinite; }
-        @keyframes progress-animation { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
         
-        #loader { position: fixed; inset: 0; background: #f2f2f7; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e5e5ea; border-top-color: #007aff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        #pc-nav { display: none; }
+        @media (min-width: 768px) {
+            #pc-nav { display: flex !important; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+            .bottom-nav-container { display: none !important; }
+            body { padding-bottom: 0 !important; } 
+            .header-container { flex-direction: column; align-items: stretch; }
+            .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        }
+
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        
+        .progress-bar-stripes { background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent); background-size: 20px 20px; animation: progress-animation 1s linear infinite; }
+        @keyframes progress-animation { from { background-position: 20px 0; } to { background-position: 0 0; } }
+        
+        /* Font sekunder untuk angka agar lebih tegas */
+        .font-num { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-24 md:pb-6">
 
     <script>
         const session = JSON.parse(localStorage.getItem('arena_session_v6'));
-        if (!session || session.role !== 'manager') window.location.href = 'index.html';
+        if (!session || session.role !== 'manager') { 
+            window.location.href = 'index.html'; 
+        }
     </script>
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <h2 class="text-sm font-bold text-gray-500 tracking-widest uppercase">Menganalisis Data...</h2>
+        <h2 id="loader-text" class="text-xl font-black text-white">MENGANALISIS DATA...</h2>
     </div>
 
-    <!-- Sticky Header -->
-    <header class="w-full glass-header sticky top-0 z-40 px-4 md:px-8 py-4 mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-10 w-10 bg-black p-1.5 rounded-xl shadow-md">
-            <div>
-                <h1 class="text-xl font-black text-black tracking-tight leading-none">Arena Executive</h1>
-                <p id="date-text" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">SINKRONISASI...</p>
+    <!-- HEADER & NAVIGASI PC -->
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto header-container">
+            <div class="header-top-row flex justify-between items-center gap-4">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-8 w-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-black text-white leading-none">ARENA MANAGER</h1>
+                        <p id="user-info-text" class="text-[9px] font-bold text-yellow-400 uppercase tracking-widest mt-1">EXECUTIVE DASHBOARD</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 w-auto justify-end">
+                    <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff]">🔄 <span class="hidden md:inline">REFRESH</span></button>
+                    <button onclick="APP.logout()" class="bg-red-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff]">🚪 <span class="hidden md:inline">LOGOUT</span></button>
+                </div>
             </div>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="APP.loadDashboard()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold w-10 h-10 rounded-full flex items-center justify-center transition-colors">🔄</button>
-            <button onclick="APP.logout()" class="bg-gray-200 hover:bg-red-100 text-gray-700 hover:text-red-600 font-bold w-10 h-10 rounded-full flex items-center justify-center transition-colors">🚪</button>
+
+            <!-- Navigasi PC -->
+            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full">
+                <button onclick="window.location.href='god-mode.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-yellow-400">👑 GOD MODE</button>
+                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-green-400">💬 MIRROR</button>
+                <button onclick="window.location.href='logs.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-gray-200">🎮 LOGS</button>
+                <button onclick="window.location.href='input.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-gray-200">📝 INPUT</button>
+                <button onclick="window.location.href='financial.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-white shadow-[2px_2px_0px_#FFD700]">📊 FINANCIAL HUB</button>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 md:px-6 space-y-6">
+    <main id="app" class="w-full max-w-6xl mx-auto p-4 md:p-6 animate-pop">
         
         <!-- TARGET MANAJER SECTION -->
-        <section class="apple-card p-6 bg-gradient-to-br from-gray-900 to-black text-white relative overflow-hidden">
-            <div class="absolute -right-10 -top-10 opacity-10 text-9xl">🎯</div>
+        <div class="mario-card p-5 md:p-8 bg-black text-white border-4 border-yellow-400 shadow-[6px_6px_0px_#000] relative overflow-hidden mb-6">
+            <div class="absolute -right-6 -top-6 opacity-20 text-9xl">🎯</div>
             <div class="relative z-10">
-                <div class="flex justify-between items-end mb-2">
+                <div class="flex justify-between items-end mb-2 border-b-2 border-dashed border-gray-700 pb-3">
                     <div>
-                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Target Manajer (Bulan Ini)</h2>
-                        <div class="text-4xl font-black"><span id="mgr-current">0</span> <span class="text-xl text-gray-500 font-bold">/ 150 Trx</span></div>
+                        <h2 class="text-xs md:text-sm font-bold text-yellow-400 uppercase tracking-widest mb-1">TARGET MANAJER BULAN INI</h2>
+                        <div class="text-3xl md:text-5xl font-black font-num tracking-tight"><span id="mgr-current">0</span> <span class="text-lg md:text-2xl text-gray-500 font-bold">/ 150 Trx</span></div>
                     </div>
                     <div class="text-right">
-                        <span id="mgr-percent" class="text-2xl font-black text-[#FFD700]">0%</span>
+                        <span id="mgr-percent" class="text-2xl md:text-4xl font-black text-[#FFD700] font-num">0%</span>
                     </div>
                 </div>
-                <div class="w-full bg-gray-800 rounded-full h-4 mt-4 overflow-hidden shadow-inner">
-                    <div id="mgr-progress" class="bg-[#FFD700] progress-bar-stripes h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                <div class="w-full bg-gray-800 rounded-full h-5 md:h-6 mt-4 overflow-hidden border-2 border-white">
+                    <div id="mgr-progress" class="bg-[#FFD700] progress-bar-stripes h-full rounded-full transition-all duration-1000 border-r-2 border-black" style="width: 0%"></div>
                 </div>
-                <p id="mgr-status-text" class="text-xs font-semibold text-gray-400 mt-3"></p>
-            </div>
-        </section>
-
-        <!-- INFOGRAFIS INSIGHTS (4 Kotak) -->
-        <h2 class="text-lg font-black text-gray-800 px-2 mt-8">Decision Making Insights</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="apple-card p-5 border border-gray-100 flex flex-col justify-between">
-                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-3 text-lg">📈</div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rata-Rata Harian</p>
-                <p id="insight-daily" class="text-2xl font-black text-gray-900 mt-1">0 <span class="text-xs font-bold text-gray-500">trx/hari</span></p>
-            </div>
-            <div class="apple-card p-5 border border-gray-100 flex flex-col justify-between">
-                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-3 text-lg">🔥</div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hari Tersibuk</p>
-                <p id="insight-maxday" class="text-base font-black text-gray-900 mt-1 leading-tight">-<br><span id="insight-maxcount" class="text-xs font-bold text-green-600">0 trx</span></p>
-            </div>
-            <div class="apple-card p-5 border border-gray-100 flex flex-col justify-between">
-                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-3 text-lg">💰</div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nilai Rata-rata</p>
-                <p id="insight-avgval" class="text-xl font-black text-gray-900 mt-1">Rp 0</p>
-            </div>
-            <div class="apple-card p-5 border border-gray-100 flex flex-col justify-between">
-                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-3 text-lg">⚠️</div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cancel Rate</p>
-                <p id="insight-cancel" class="text-2xl font-black text-red-600 mt-1">0%</p>
+                <p id="mgr-status-text" class="text-[10px] md:text-xs font-bold text-gray-400 mt-3 uppercase tracking-wider"></p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-            <!-- DISTRIBUSI CABANG -->
-            <section class="apple-card p-6 border border-gray-100 flex flex-col">
-                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-6">Distribusi Cabang</h3>
-                <div id="branch-dist" class="space-y-5 flex-grow">
-                    <!-- Branch info diisi via JS -->
-                </div>
-            </section>
+        <!-- DECISION MAKING INSIGHTS (4 Kotak) -->
+        <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2">Decision Making Insights</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center">
+                <div class="w-10 h-10 rounded-full bg-blue-100 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">📈</div>
+                <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-tight">Rata-Rata Harian</p>
+                <p id="insight-daily" class="text-xl md:text-2xl font-black text-blue-600 mt-1 font-num">0 <span class="text-[10px] font-bold text-gray-500">trx</span></p>
+            </div>
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-green-50">
+                <div class="w-10 h-10 rounded-full bg-green-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">🔥</div>
+                <p class="text-[9px] font-bold text-green-700 uppercase tracking-widest leading-tight">Hari Tersibuk</p>
+                <p id="insight-maxday" class="text-sm md:text-base font-black text-green-800 mt-1 uppercase leading-tight">-<br><span id="insight-maxcount" class="text-xs font-black text-black font-num">0 trx</span></p>
+            </div>
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-yellow-50">
+                <div class="w-10 h-10 rounded-full bg-yellow-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">💰</div>
+                <p class="text-[9px] font-bold text-yellow-700 uppercase tracking-widest leading-tight">Nilai Rata-rata</p>
+                <p id="insight-avgval" class="text-base md:text-lg font-black text-yellow-800 mt-1 font-num">Rp 0</p>
+            </div>
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-red-50">
+                <div class="w-10 h-10 rounded-full bg-red-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">⚠️</div>
+                <p class="text-[9px] font-bold text-red-700 uppercase tracking-widest leading-tight">Cancel Rate</p>
+                <p id="insight-cancel" class="text-xl md:text-2xl font-black text-red-600 mt-1 font-num">0%</p>
+            </div>
+        </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
             <!-- KPI ADMIN -->
-            <section class="apple-card p-6 border border-gray-100">
-                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-6 flex justify-between items-center">
-                    <span>🏆 Peringkat KPI Admin</span>
+            <div class="mario-card p-5 md:p-6 border-4 border-black">
+                <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-black pb-2">
+                    <span class="text-2xl">🏆</span> PERINGKAT KPI ADMIN
                 </h3>
-                <div id="kpi-list" class="space-y-4">
+                <div id="kpi-list" class="space-y-3">
                     <!-- KPI List diisi via JS -->
                 </div>
-            </section>
-        </div>
+            </div>
 
-        <!-- QUICK NAV -->
-        <h2 class="text-lg font-black text-gray-800 px-2 mt-8">Navigasi Utama</h2>
-        <div class="grid grid-cols-3 gap-4 mb-10">
-            <button onclick="window.location.href='financial.html'" class="menu-btn apple-card p-4 flex flex-col items-center justify-center border border-gray-100 bg-[#FF6B00] text-white">
-                <span class="text-2xl mb-1">📊</span>
-                <span class="font-bold text-xs">Financial Hub</span>
-            </button>
-            <button onclick="window.location.href='logs.html'" class="menu-btn apple-card p-4 flex flex-col items-center justify-center border border-gray-100 text-gray-800">
-                <span class="text-2xl mb-1">🎮</span>
-                <span class="font-bold text-xs">Logs Unit</span>
-            </button>
-            <button onclick="window.location.href='input.html'" class="menu-btn apple-card p-4 flex flex-col items-center justify-center border border-gray-100 text-gray-800">
-                <span class="text-2xl mb-1">📝</span>
-                <span class="font-bold text-xs">Input Trx</span>
-            </button>
+            <!-- DISTRIBUSI CABANG -->
+            <div class="mario-card p-5 md:p-6 border-4 border-black bg-blue-50">
+                <h3 class="text-base md:text-lg font-black text-blue-900 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-blue-900 pb-2">
+                    <span class="text-2xl">📍</span> DISTRIBUSI CABANG
+                </h3>
+                <div id="branch-dist" class="space-y-4">
+                    <!-- Branch info diisi via JS -->
+                </div>
+            </div>
         </div>
 
     </main>
+
+    <!-- Navigasi Mobile -->
+    <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 20px; scroll-behavior: smooth;">
+            <div onclick="window.location.href='manager.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
+                <span class="text-xl block mb-1">🏠</span>HOME
+            </div>
+            <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+            <div onclick="window.location.href='financial.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">📊</span>FINANCE
+            </div>
+            <div onclick="window.location.href='god-mode.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">👑</span>GOD
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+        </nav>
+    </div>
 
     <script>
         const CONFIG = { WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1" };
@@ -143,17 +191,16 @@
 
         const APP = {
             init: () => {
-                const now = new Date();
-                document.getElementById('date-text').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                document.getElementById('user-info-text').innerText = `${session.username.toUpperCase()} | EXECUTIVE DASHBOARD`;
                 APP.loadDashboard();
             },
             logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0),
-            formatDateNice: (dStr) => {
-                if(!dStr) return '-';
-                const d = new Date(dStr);
-                if(isNaN(d)) return dStr;
-                return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            
+            // Format Bulan YYYY-MM
+            getMonthStr: () => { 
+                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); 
+                return d.toISOString().substring(0,7); 
             },
             
             api: async (p) => {
@@ -168,16 +215,15 @@
                 const res = await APP.api({ action: 'get_dashboard', role: 'manager', branch: 'ALL' });
                 document.getElementById('loader').classList.add('hidden');
 
-                STATE.logs = Array.isArray(res) ? res.map(i => i.json || i) : [];
+                // Filter hanya data log, abaikan expense
+                STATE.logs = Array.isArray(res) ? res.map(i => i.json || i).filter(i => i.tagihan_arena !== undefined) : [];
                 APP.processInsights();
             },
 
             processInsights: () => {
+                const monthStr = APP.getMonthStr(); // Misal "2026-05"
                 const now = new Date();
-                // Get timezone offset handled date string for month comparison
-                const tzOffset = now.getTimezoneOffset() * 60000; 
-                const localISOTime = (new Date(Date.now() - tzOffset)).toISOString();
-                const monthStr = localISOTime.substring(0,7);
+                const currentDayOfMoth = now.getDate(); // Tanggal berjalan bulan ini
                 
                 let totalValid = 0;
                 let totalRevenue = 0;
@@ -185,108 +231,139 @@
                 let totalAll = 0;
                 
                 let kpis = {};
-                let dailyCount = {};
                 let branchCount = { 'Banda': 0, 'Sabang': 0, 'Aceh Timur': 0 };
+                
+                // Variabel untuk menghitung hari tersibuk (Senin, Selasa, dll)
+                const dayNames = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                let dayCounts = { 'SENIN': 0, 'SELASA': 0, 'RABU': 0, 'KAMIS': 0, 'JUMAT': 0, 'SABTU': 0, 'MINGGU': 0 };
 
                 STATE.logs.forEach(l => {
-                    const dateStrFull = l.jam_mulai_sewa || l.createdAt || '';
-                    if (!dateStrFull.startsWith(monthStr)) return;
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    
+                    // Filter pastikan hanya data bulan ini (cocok YYYY-MM)
+                    if (!safeDate.startsWith(monthStr)) return;
 
-                    const dateStr = dateStrFull.substring(0,10);
+                    totalAll++;
+                    
                     const status = String(l.status_unit_arena).toLowerCase();
-                    const admin = String(l.admin_name || l.Users || 'Sistem').toUpperCase();
+                    const admin = String(l.admin_creator || l.Users || l.admin_name || 'Sistem').toUpperCase();
                     const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
                     const revenue = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
 
-                    totalAll++;
-
                     if (status === 'batal') {
                         totalBatal++;
-                    } else if (!['pending', 'maintenance'].includes(status)) {
+                    } else if (['playing', 'main', 'finished', 'selesai', 'booked', 'book'].includes(status)) {
                         totalValid++;
                         totalRevenue += revenue;
                         
+                        // Hitung KPI
                         kpis[admin] = (kpis[admin] || 0) + 1;
-                        dailyCount[dateStr] = (dailyCount[dateStr] || 0) + 1;
+                        
+                        // Hitung Distribusi Cabang
                         if(branchCount[branch] !== undefined) branchCount[branch]++;
+
+                        // Hitung Hari Tersibuk berdasarkan nama hari
+                        let dObj = new Date(safeDate.replace(' ', 'T'));
+                        if (!isNaN(dObj.getTime())) {
+                            let dayIndex = dObj.getDay();
+                            dayCounts[dayNames[dayIndex]]++;
+                        }
                     }
                 });
 
-                // 1. Manager Target (150)
+                // ==========================
+                // 1. MANAGER TARGET (150)
+                // ==========================
                 const mgrTarget = 150;
                 const mgrPercent = Math.min(Math.round((totalValid / mgrTarget) * 100), 100);
                 document.getElementById('mgr-current').innerText = totalValid;
                 document.getElementById('mgr-percent').innerText = `${mgrPercent}%`;
                 document.getElementById('mgr-progress').style.width = `${mgrPercent}%`;
                 
-                let mgrStatusTxt = `Membutuhkan ${Math.max(mgrTarget - totalValid, 0)} trx lagi untuk capai target.`;
-                if (totalValid >= mgrTarget) mgrStatusTxt = "🎉 Luar biasa! Target manajer bulan ini telah tercapai.";
+                let mgrStatusTxt = `Membutuhkan ${Math.max(mgrTarget - totalValid, 0)} transaksi lagi untuk capai target KPI.`;
+                if (totalValid >= mgrTarget) mgrStatusTxt = "🎉 LUAR BIASA! TARGET MANAJER BULAN INI TELAH TERCAPAI.";
                 document.getElementById('mgr-status-text').innerText = mgrStatusTxt;
 
-                // 2. Daily Average
-                const currentDay = now.getDate();
-                const dailyAvg = totalValid > 0 ? (totalValid / currentDay).toFixed(1) : 0;
-                document.getElementById('insight-daily').innerHTML = `${dailyAvg} <span class="text-xs font-bold text-gray-500">trx/hari</span>`;
+                // ==========================
+                // 2. RATA-RATA HARIAN
+                // ==========================
+                const dailyAvg = totalValid > 0 ? (totalValid / currentDayOfMoth).toFixed(1) : 0;
+                document.getElementById('insight-daily').innerHTML = `${dailyAvg} <span class="text-[10px] font-bold text-gray-500">trx</span>`;
 
-                // 3. Highest Day
-                let maxDay = ''; let maxDayCount = 0;
-                for (const [day, count] of Object.entries(dailyCount)) {
-                    if (count > maxDayCount) { maxDayCount = count; maxDay = day; }
+                // ==========================
+                // 3. HARI TERSIBUK (Senin/Selasa)
+                // ==========================
+                let maxDayName = '-'; 
+                let maxDayCount = 0;
+                for (const [dName, dCount] of Object.entries(dayCounts)) {
+                    if (dCount > maxDayCount) { maxDayCount = dCount; maxDayName = dName; }
                 }
-                document.getElementById('insight-maxday').innerText = APP.formatDateNice(maxDay);
-                document.getElementById('insight-maxcount').innerText = `${maxDayCount} transaksi`;
+                document.getElementById('insight-maxday').innerText = maxDayName;
+                document.getElementById('insight-maxcount').innerText = `${maxDayCount} trx total`;
 
-                // 4. Avg Value
+                // ==========================
+                // 4. NILAI RATA-RATA TRANSAKSI
+                // ==========================
                 const avgValue = totalValid > 0 ? (totalRevenue / totalValid) : 0;
                 document.getElementById('insight-avgval').innerText = APP.formatRp(avgValue);
 
-                // 5. Cancel Rate
+                // ==========================
+                // 5. CANCEL RATE
+                // ==========================
                 const cancelRate = totalAll > 0 ? ((totalBatal / totalAll) * 100).toFixed(1) : 0;
                 document.getElementById('insight-cancel').innerText = `${cancelRate}%`;
 
-                // 6. Branch Distribution
+                // ==========================
+                // 6. DISTRIBUSI CABANG
+                // ==========================
                 const branchContainer = document.getElementById('branch-dist');
-                const branchColors = { 'Banda': 'bg-blue-500', 'Sabang': 'bg-teal-500', 'Aceh Timur': 'bg-orange-500' };
+                const branchColors = { 'Banda': 'bg-blue-600', 'Sabang': 'bg-teal-500', 'Aceh Timur': 'bg-orange-500' };
                 let branchHtml = '';
                 
                 for (const [bName, bCount] of Object.entries(branchCount)) {
                     let pct = totalValid > 0 ? Math.round((bCount / totalValid) * 100) : 0;
                     branchHtml += `
-                        <div>
-                            <div class="flex justify-between text-xs font-bold mb-1">
-                                <span class="text-gray-700">${bName === 'Banda' ? 'Banda Aceh' : bName}</span>
-                                <span class="text-gray-900">${bCount} trx <span class="text-gray-400 ml-1">(${pct}%)</span></span>
+                        <div class="bg-white p-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000]">
+                            <div class="flex justify-between items-end mb-1">
+                                <span class="font-black text-xs uppercase">${bName === 'Banda' ? 'Banda Aceh' : bName}</span>
+                                <span class="font-black text-sm font-num">${bCount} <span class="text-[9px] font-bold text-gray-400">trx</span> <span class="text-xs text-blue-700 ml-1">(${pct}%)</span></span>
                             </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                <div class="${branchColors[bName]} h-full rounded-full" style="width: ${pct}%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 border border-black overflow-hidden">
+                                <div class="${branchColors[bName]} h-full border-r border-black" style="width: ${pct}%"></div>
                             </div>
                         </div>`;
                 }
-                branchContainer.innerHTML = branchHtml || '<p class="text-xs text-gray-400">Tidak ada data.</p>';
+                branchContainer.innerHTML = branchHtml || '<p class="text-xs text-gray-400 font-bold">Tidak ada data.</p>';
 
-                // 7. KPI Admin List
+                // ==========================
+                // 7. KPI ADMIN LIST
+                // ==========================
                 const kpiContainer = document.getElementById('kpi-list');
                 const sortedKpis = Object.entries(kpis).sort((a, b) => b[1] - a[1]);
                 
-                const medals = ['🥇', '🥈', '🥉'];
+                const medals = ['👑', '🥈', '🥉'];
 
                 if (sortedKpis.length === 0) {
-                    kpiContainer.innerHTML = '<p class="text-center text-sm text-gray-400 py-4 border-2 border-dashed border-gray-200 rounded-xl">Belum ada data admin.</p>';
+                    kpiContainer.innerHTML = '<p class="text-center text-sm font-bold text-gray-400 py-4 border-2 border-dashed border-gray-300 rounded-xl">Belum ada data admin bulan ini.</p>';
                 } else {
+                    const topScore = sortedKpis[0][1];
                     kpiContainer.innerHTML = sortedKpis.map(([name, count], index) => {
-                        let rankIcon = index < 3 ? `<span class="text-xl">${medals[index]}</span>` : `<span class="w-6 text-center text-xs font-bold text-gray-400">#${index+1}</span>`;
-                        let barPct = Math.min((count / sortedKpis[0][1]) * 100, 100); // Relatif terhadap top 1
+                        let rankIcon = index < 3 
+                            ? `<div class="w-8 h-8 rounded-full bg-yellow-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-lg">${medals[index]}</div>` 
+                            : `<div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xs font-black">#${index+1}</div>`;
+                        
+                        let barPct = Math.min((count / topScore) * 100, 100); 
                         
                         return `
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000]">
                             ${rankIcon}
-                            <div class="flex-grow">
+                            <div class="flex-grow pr-2">
                                 <div class="flex justify-between items-end mb-1">
-                                    <span class="font-bold text-xs text-gray-800">${name}</span>
-                                    <span class="font-black text-sm">${count} <span class="text-[10px] font-bold text-gray-400">trx</span></span>
+                                    <span class="font-black text-xs uppercase">${name}</span>
+                                    <span class="font-black text-sm text-[#FF6B00] font-num">${count} <span class="text-[9px] font-bold text-gray-500">trx</span></span>
                                 </div>
-                                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div class="bg-gradient-to-r from-gray-800 to-black h-full rounded-full" style="width: ${barPct}%"></div>
+                                <div class="w-full bg-gray-300 rounded-full h-2 border border-black overflow-hidden">
+                                    <div class="bg-black h-full border-r border-black" style="width: ${barPct}%"></div>
                                 </div>
                             </div>
                         </div>`;
