@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - Logs Dashboard</title>
+    
+    <link class="apple-touch-icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png">
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
+        
+        #pc-nav { display: none; }
+        @media (min-width: 768px) {
+            #pc-nav { display: flex !important; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+            .bottom-nav-container { display: none !important; }
+            body { padding-bottom: 0 !important; } 
+            .header-container { flex-direction: column; align-items: stretch; }
+            .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        }
+
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="pb-24 md:pb-0">
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        if (!session || session.role !== 'manager') { 
+            window.location.href = 'index.html'; 
+        }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
+    </div>
+
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto header-container">
+            <div class="header-top-row flex justify-between items-center gap-4">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-8 w-8 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-black text-white leading-none">ARENA MANAGER</h1>
+                        <p id="user-info-text" class="text-[9px] font-bold text-yellow-400 uppercase tracking-widest mt-1">SINKRONISASI...</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 w-auto justify-end">
+                    <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs">🔄 <span class="hidden md:inline">REFRESH</span></button>
+                    <button onclick="APP.logout()" class="bg-red-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs">🚪 <span class="hidden md:inline">LOGOUT</span></button>
+                </div>
+            </div>
+
+            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full">
+                <button onclick="window.location.href='god.html'" class="mario-btn bg-yellow-400 text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">👑 GOD</button>
+                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">💬 MIRROR</button>
+                <button onclick="window.location.href='logs.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">🎮 LOGS</button>
+                <button onclick="window.location.href='input.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">📝 INPUT</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="app" class="w-full max-w-7xl mx-auto p-4 md:p-6 mt-2 animate-pop">
+        <div id="main-content" class="w-full mx-auto space-y-6"></div>
+    </main>
+
+    <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 25px; scroll-behavior: smooth;">
+            <div onclick="window.location.href='god.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">👑</span>GOD
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+            <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+        </nav>
+    </div>
+
+    <div id="modal-acc" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2><div class="space-y-3 text-left"><label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label><select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button><button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button></div></div></div></div>
+
+    <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
+
+    <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
+
+    <script>
+        const CONFIG = {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
+            UNITS: [ 
+                { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, 
+                { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
+            ]
+        };
+
+        const STATE = { 
+            user: session, 
+            logs: [], 
+            activeModalRowId: null, activeModalStat: null, activeModalUnit: null, activeModalPay: null, activeAccId: null, activeAccPay: null
+        };
+
+        const APP = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | SYSTEM MANAGER`;
+                APP.loadDashboard();
+            },
+            showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
+            hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
+            getMonthStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().substring(0,7); },
+            logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return null; }
+            },
+
+            loadDashboard: async () => {
+                APP.showLoader('SINKRONISASI DATA...');
+                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
+                APP.hideLoader();
+                let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; d._dbIndex = idx; return d; }) : [];
+                STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
+                document.getElementById('main-content').innerHTML = APP.renderLogsUI();
+            },
+
+            getUnitStatusRaw: (uNum) => {
+                const logs = STATE.logs.filter(l => String(l.unit_arena).replace(/\D/g, '') === String(uNum));
+                logs.sort((a,b) => new Date(String(b.jam_mulai_sewa || b.createdAt).replace(' ','T')) - new Date(String(a.jam_mulai_sewa || a.createdAt).replace(' ','T')));
+                return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
+            },
+
+            generateUnitOptionsHtml: (branch, dateStr) => {
+                return CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4))).map(u => {
+                    const stat = APP.getUnitStatusRaw(u.id);
+                    if (stat === 'maintenance') return '';
+                    let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
+                    return `<option value="${u.id}">${label}</option>`;
+                }).join('');
+            },
+
+            renderLogsUI: () => {
+                const pending = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
+                let pnl = ''; 
+                
+                if(pending.length > 0) {
+                    pnl = `
+                    <div class="mb-6 p-4 border-4 border-red-500 bg-red-100 rounded-xl shadow-[4px_4px_0px_#ef4444] animate-pulse">
+                        <h3 class="font-black text-red-600 mb-3 text-center uppercase tracking-widest">🚨 PESANAN BARU! 🚨</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${pending.map(l => {
+                                const rId = l.id || l.row_number || l._rowIndex || ''; 
+                                const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                                let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                                const tglMainStr = safeDate.substring(0,10);
+                                const ongTxt = Number(l.ongkir || l.ongkir_arena) > 0 ? `<br><span class="text-blue-600 text-xs">+ Ongkir ${APP.formatRp(l.ongkir || l.ongkir_arena)}</span>` : '';
+                                return `
+                                <div class="border-2 border-black p-3 bg-white rounded-lg">
+                                    <div class="flex justify-between">
+                                        <p class="font-black text-sm uppercase">${l.nama_pelanggan_arena}</p>
+                                        <p class="font-black text-sm text-[#FF6B00] text-right">${APP.formatRp(l.tagihan_arena)}${ongTxt}</p>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-gray-600 mb-1">Pesan: ${l.paket_arena} | ${cabLabel}</p>
+                                    <p class="text-[10px] font-bold text-red-600 mb-3 bg-red-100 inline-block px-2 py-0.5 rounded">Main: ${safeDate.substring(0,16) || '-'}</p>
+                                    <div class="flex gap-2 mt-2 border-t-2 border-dashed border-gray-300 pt-2">
+                                        <button onclick="APP.openAccModal('${rId}', '${l.pembayaran}', '${l.cabang_arena}', '${tglMainStr}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black flex-1 border-green-700">ACC ✅</button>
+                                        <button onclick="APP.showCancelModal('${rId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn bg-red-500 text-white p-2 text-xs font-black flex-1 border-red-700">TOLAK ❌</button>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }
+
+                let uHtml = '<div class="flex overflow-x-auto md:grid md:grid-cols-7 gap-3 mb-4 custom-scroll pb-2">';
+                CONFIG.UNITS.forEach(u => {
+                    const s = APP.getUnitStatusRaw(u.id); 
+                    let bg = 'bg-green-500 text-white border-green-700'; let txt = 'KOSONG';
+                    if(['playing','main'].includes(s)){ bg = 'bg-red-600 text-white border-red-800'; txt = 'PLAYING'; } 
+                    else if(['booked','book','pending'].includes(s)){ bg = 'bg-[#FF6B00] text-white border-orange-800'; txt = 'BOOKED'; } 
+                    else if(s === 'maintenance'){ bg = 'bg-gray-800 text-white border-black'; txt = 'MAINTENANCE'; }
+                    uHtml += `
+                        <div class="min-w-[100px] border-2 rounded-xl py-3 text-center shadow-[2px_2px_0px_#000] ${bg} flex flex-col justify-center items-center flex-shrink-0">
+                            <p class="text-[8px] font-black opacity-70 tracking-widest mb-0.5">${u.label}</p>
+                            <p class="font-black text-2xl leading-none">U${u.id}</p>
+                            <p class="text-[10px] font-bold uppercase mt-1">${txt}</p>
+                        </div>`;
+                });
+                uHtml += '</div>';
+
+                return `
+                    <div class="mario-card p-4 md:p-6 animate-pop w-full mx-auto">
+                        ${pnl}
+                        <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status Unit</h2>
+                        ${uHtml}
+                        <div class="flex flex-col md:flex-row justify-between md:items-end mb-3 mt-6 border-t-2 border-dashed border-gray-400 pt-4 gap-3">
+                            <h3 class="font-black text-sm uppercase">LOGS BULAN INI</h3>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
+                                    <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
+                                </select>
+                                <select id="log-filter-status" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold text-gray-700 w-1/2 md:w-auto">
+                                    <option value="ALL">Semua Status</option><option value="booked">Booked ⏳</option><option value="playing">Playing 🔴</option><option value="finished">Finished ✅</option><option value="batal">Batal ❌</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="filtered-logs-container" class="w-full">${APP.getLogListHTML('ALL', 'ALL')}</div>
+                    </div>`;
+            },
+
+            updateLogList: () => {
+                const cabang = document.getElementById('log-filter-cabang').value;
+                const status = document.getElementById('log-filter-status').value;
+                document.getElementById('filtered-logs-container').innerHTML = APP.getLogListHTML(cabang, status);
+            },
+
+            getLogListHTML: (cabFilter, statFilter) => {
+                const mStr = APP.getMonthStr(); 
+                const filtered = STATE.logs.filter(l => {
+                    const s = String(l.status_unit_arena).toLowerCase();
+                    if (['pending', 'maintenance'].includes(s)) return false; 
+                    if (statFilter !== 'ALL' && s !== statFilter) return false; 
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    if (safeDate.substring(0,7) !== mStr && safeDate !== '') return false;
+                    if (cabFilter !== 'ALL' && !(l.cabang_arena === cabFilter || (cabFilter==='Banda'&&l.cabang_arena==='Banda Aceh') || (cabFilter==='Aceh Timur'&&l.cabang_arena==='Atim'))) return false;
+                    return true;
+                });
+
+                if (cabFilter === 'ALL') {
+                    let groupedHtml = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
+                    ['Banda', 'Sabang', 'Aceh Timur'].forEach(b => {
+                        const bLogs = filtered.filter(l => l.cabang_arena === b || (b==='Banda'&&l.cabang_arena==='Banda Aceh') || (b==='Aceh Timur'&&l.cabang_arena==='Atim'));
+                        if (bLogs.length > 0) {
+                            groupedHtml += `
+                                <div class="mb-4">
+                                    <h4 class="font-black text-xs bg-black text-white p-3 rounded-t-xl uppercase text-center">${b === 'Banda' ? 'BANDA ACEH' : b}</h4>
+                                    <div class="border-2 border-black border-t-0 p-3 rounded-b-xl bg-gray-50 flex flex-col gap-3">
+                                        ${bLogs.reverse().map(l => APP.renderSingleLogCard(l)).join('')}
+                                    </div>
+                                </div>`;
+                        }
+                    });
+                    return groupedHtml + '</div>' || '<p class="text-center font-bold text-gray-500 py-6">Tidak ada log di bulan ini.</p>';
+                } else {
+                    return `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${filtered.reverse().map(l => APP.renderSingleLogCard(l)).join('')}</div>` || '<p class="text-center font-bold text-gray-500 py-6">Tidak ada log di bulan ini.</p>';
+                }
+            },
+
+            renderSingleLogCard: (l) => {
+                const rId = l.id || l.row_number || l._rowIndex || '';
+                const uLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
+                const cLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                let dStr = ''; 
+                if (safeDate) { const dObj = new Date(safeDate.replace(' ', 'T')); if (!isNaN(dObj)) dStr = ['MINGGU','SENIN','SELASA','RABU','KAMIS','JUMAT','SABTU'][dObj.getDay()]; }
+                
+                const stat = String(l.status_unit_arena).toLowerCase(); 
+                const pay = l.pembayaran || 'Belum';
+                const wLink = l.link_wa_pelanggan_arena || 'https://wa.me/' + String(l.nomor_pelanggan_arena).replace(/^0/, '62');
+                
+                let cardClass = "border-2 border-black p-3 rounded-xl bg-white shadow-[2px_2px_0px_#000] relative w-full h-full flex flex-col";
+                let badgeHtml = ""; let txtClass = "";
+                let payClass = 'bg-red-400 text-white'; let payTxt = '❌ BELUM';
+                
+                if (pay === 'Lunas Cash') { payClass = 'bg-green-400 text-black'; payTxt = '💵 CASH'; }
+                else if (pay === 'Lunas Transfer') { payClass = 'bg-blue-500 text-white'; payTxt = '📱 TF'; }
+                else if (pay === 'Lunas' || pay === 'lunas') { payClass = 'bg-green-400 text-black'; payTxt = '✅ LUNAS'; }
+
+                if (stat === 'batal') { 
+                    cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-75 relative flex flex-col"; txtClass = "line-through text-gray-500"; badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg shadow-md z-10">❌ BATAL</div>`; 
+                } else if (stat === 'booked' || stat === 'book') { 
+                    cardClass = "border-2 border-[#FF6B00] p-3 rounded-xl bg-orange-50 shadow-[2px_2px_0px_#ea580c] relative flex flex-col"; 
+                } else if (stat === 'playing' || stat === 'main') { 
+                    cardClass = "border-2 border-red-500 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#ef4444] relative flex flex-col"; badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>`; 
+                } else if (stat === 'finished' || stat === 'selesai') { 
+                    if (pay === 'Belum' || !pay) { cardClass = "border-4 border-red-600 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#dc2626] relative flex flex-col"; badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg animate-pulse shadow-md">⚠️ BELUM BAYAR</div>`; } 
+                    else { cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-100 shadow-[2px_2px_0px_gray] relative flex flex-col"; } 
+                }
+
+                const oVal = l.ongkir || l.ongkir_arena || 0;
+                const oLbl = Number(oVal) > 0 ? `<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-1 border border-blue-300 rounded ml-1">+ Ongkir ${APP.formatRp(oVal)}</span>` : '';
+
+                return `
+                <div class="${cardClass} mb-2">
+                    ${badgeHtml}
+                    <div class="flex justify-between items-start mb-2 border-b-2 border-dashed border-gray-300 pb-2">
+                        <div class="flex flex-col">
+                            <span class="font-black text-xl text-[#FF6B00] leading-none mb-1 ${txtClass}">${dStr}</span>
+                            <span class="font-bold text-[10px] text-gray-500">${safeDate.substring(0,16)}</span>
+                        </div>
+                        <span class="font-black text-[10px] bg-black text-white px-2 py-1 rounded-md mt-1">${uLabel} (${cLabel})</span>
+                    </div>
+                    <p class="font-bold text-sm uppercase flex-grow ${txtClass}">${l.nama_pelanggan_arena} <span class="text-[10px] text-gray-500 normal-case ml-1">${l.nomor_pelanggan_arena || ''}</span></p>
+                    <div class="flex justify-between items-end mt-2">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold text-gray-700 ${txtClass}">${l.paket_arena}</span>
+                            ${oLbl}
+                        </div>
+                        <span class="text-sm font-black text-orange-600 ${txtClass}">${APP.formatRp(l.tagihan_arena)}</span>
+                    </div>
+                    <div class="flex gap-2 mt-3 pt-3 border-t border-gray-200">
+                        <select data-old-value="${stat}" onchange="APP.handleStatusChange(this, '${rId}', '${pay}', '${l.unit_arena}')" class="mario-input p-2 text-[10px] w-1/3 font-bold">
+                            <option value="booked" ${stat==='booked'?'selected':''}>BOOKED</option>
+                            <option value="playing" ${stat==='playing'?'selected':''}>PLAYING</option>
+                            <option value="finished" ${stat==='finished'?'selected':''}>FINISHED</option>
+                            <option value="batal" ${stat==='batal'?'selected':''}>BATAL ❌</option>
+                        </select>
+                        <button onclick="APP.handlePaymentClick('${rId}', '${stat}', '${pay}', '${l.unit_arena}')" class="mario-btn p-2 text-[10px] w-1/3 ${payClass}">${payTxt}</button>
+                        <a href="${wLink}" target="_blank" class="mario-btn p-2 text-[11px] w-1/3 bg-[#25D366] text-white flex items-center justify-center font-black">💬 WA</a>
+                    </div>
+                </div>`;
+            },
+
+            // Modal Handlers
+            closeModal: (id) => { document.getElementById(id).classList.add('hidden'); },
+            openAccModal: (id, pay, branch, dateStr) => { STATE.activeAccId = id; STATE.activeAccPay = pay; document.getElementById('acc-modal-unit').innerHTML = APP.generateUnitOptionsHtml(branch, dateStr); document.getElementById('modal-acc').classList.remove('hidden'); },
+            confirmAccBooking: async () => { 
+                const selectedUnit = document.getElementById('acc-modal-unit').value;
+                if(!selectedUnit) { alert("Pilih unit terlebih dahulu bos!"); return; }
+                APP.closeModal('modal-acc'); APP.showLoader('MENGKONFIRMASI...'); 
+                await APP.api({ action: 'update_status', row_id: STATE.activeAccId, status_unit: 'booked', pembayaran: STATE.activeAccPay, unit: selectedUnit, admin_name: STATE.user.username, keterangan: '' }); 
+                await APP.loadDashboard(); 
+            },
+            handleStatusChange: (selectEl, id, pay, unit) => { 
+                const newVal = selectEl.value; 
+                if (newVal === 'batal') { 
+                    selectEl.value = selectEl.getAttribute('data-old-value'); 
+                    STATE.activeModalRowId = id; STATE.activeModalPay = pay; STATE.activeModalUnit = unit; 
+                    document.getElementById('cancel-other').classList.add('hidden'); document.getElementById('modal-cancel').classList.remove('hidden'); 
+                } else { 
+                    APP.showLoader('UPDATE STATUS...'); 
+                    APP.api({ action: 'update_status', row_id: id, status_unit: newVal, pembayaran: pay, unit: unit, admin_name: STATE.user.username, keterangan: '' }).then(() => APP.loadDashboard()); 
+                } 
+            },
+            showCancelModal: (id, pay, unit) => { STATE.activeModalRowId = id; STATE.activeModalPay = pay; STATE.activeModalUnit = unit || '1'; document.getElementById('cancel-reason').value = 'Telat Respon'; document.getElementById('cancel-other').value = ''; document.getElementById('cancel-other').classList.add('hidden'); document.getElementById('modal-cancel').classList.remove('hidden'); },
+            toggleCancelOther: () => { document.getElementById('cancel-other').classList.toggle('hidden', document.getElementById('cancel-reason').value !== 'Lainnya'); },
+            confirmCancel: async () => { 
+                let r = document.getElementById('cancel-reason').value; if (r === 'Lainnya') r = document.getElementById('cancel-other').value || 'Alasan tidak disebutkan'; 
+                APP.closeModal('modal-cancel'); APP.showLoader('MEMBATALKAN...'); 
+                await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: 'batal', pembayaran: STATE.activeModalPay, unit: STATE.activeModalUnit || '1', admin_name: STATE.user.username, keterangan: r }); 
+                await APP.loadDashboard(); 
+            },
+            handlePaymentClick: (id, currentStat, currentPay, currentUnit) => { 
+                if (currentPay === 'Belum' || !currentPay || currentPay === 'undefined') { 
+                    STATE.activeModalRowId = id; STATE.activeModalStat = currentStat; STATE.activeModalUnit = currentUnit; document.getElementById('modal-payment').classList.remove('hidden'); 
+                } else { 
+                    APP.showLoader('UPDATE BAYAR...'); 
+                    APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: 'Belum', unit: currentUnit, admin_name: STATE.user.username, keterangan: '' }).then(() => APP.loadDashboard()); 
+                } 
+            },
+            confirmPayment: async (method) => { APP.closeModal('modal-payment'); APP.showLoader('UPDATE BAYAR...'); await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: STATE.activeModalStat, pembayaran: `Lunas ${method}`, unit: STATE.activeModalUnit, admin_name: STATE.user.username, keterangan: '' }); await APP.loadDashboard(); }
+        };
+
+        window.onload = APP.init;
+    </script>
+</body>
+</html>
