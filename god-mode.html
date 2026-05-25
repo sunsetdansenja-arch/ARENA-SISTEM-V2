@@ -448,8 +448,17 @@
                 newCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
                 retCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
 
-                document.getElementById('count-new').innerText = newCustList.length;
-                document.getElementById('count-returning').innerText = retCustList.length;
+// Hitung total Rupiah
+let totalNewRp = newCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
+let totalRetRp = retCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
+
+// Update UI Count
+document.getElementById('count-new').innerText = newCustList.length + ' Orang';
+document.getElementById('count-returning').innerText = retCustList.length + ' Orang';
+
+// Update UI Total Rp
+document.getElementById('total-new-rp').innerText = GOD.formatRp(totalNewRp);
+document.getElementById('total-returning-rp').innerText = GOD.formatRp(totalRetRp);
 
                 let htmlNew = '';
                 newCustList.forEach(c => {
