@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARENA SYSTEM - Input Transaksi</title>
     
-    <link class="apple-touch-icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png">
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -21,32 +19,20 @@
         .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 12px; font-weight: 600; outline: none; }
         .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
         
-        #pc-nav { display: none; }
-        @media (min-width: 768px) {
-            #pc-nav { display: flex !important; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
-            .bottom-nav-container { display: none !important; }
-            body { padding-bottom: 0 !important; } 
-            .header-container { flex-direction: column; align-items: stretch; }
-            .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        }
-
         #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
         .animate-pop { animation: popIn 0.3s forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        
-        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="pb-24 md:pb-0">
+<body class="pb-10">
 
     <script>
         const session = JSON.parse(localStorage.getItem('arena_session_v6'));
-        if (!session || session.role !== 'manager') { 
+        // Cek login untuk kedua role
+        if (!session || (session.role !== 'manager' && session.role !== 'admin')) { 
             window.location.href = 'index.html'; 
         }
     </script>
@@ -57,29 +43,12 @@
     </div>
 
     <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
-        <div class="max-w-7xl mx-auto header-container">
-            <div class="header-top-row flex justify-between items-center gap-4">
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
-                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-8 w-8 object-contain">
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-black text-white leading-none">ARENA MANAGER</h1>
-                        <p id="user-info-text" class="text-[9px] font-bold text-yellow-400 uppercase tracking-widest mt-1">INPUT SYSTEM</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 w-auto justify-end">
-                    <button onclick="APP.logout()" class="bg-red-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs">🚪 <span class="hidden md:inline">LOGOUT</span></button>
-                </div>
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
+            <button onclick="APP.goBack()" class="mario-btn bg-white text-black px-4 py-2 text-xs md:text-sm font-black shadow-[2px_2px_0px_#FFD700]">◀ KEMBALI</button>
+            <div class="text-right">
+                <h1 class="text-lg md:text-xl font-black text-white leading-none">INPUT SISTEM</h1>
+                <p id="user-info-text" class="text-[9px] md:text-xs font-bold text-yellow-400 uppercase tracking-widest mt-1">SINKRONISASI...</p>
             </div>
-
-            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full">
-                <button onclick="window.location.href='god.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">👑 GOD</button>
-                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">💬 MIRROR</button>
-                <button onclick="window.location.href='logs.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">🎮 LOGS</button>
-                <button onclick="window.location.href='input.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black">📝 INPUT</button>
-            </nav>
         </div>
     </header>
 
@@ -87,33 +56,12 @@
         <div id="main-content" class="w-full mx-auto"></div>
     </main>
 
-    <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
-        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 25px; scroll-behavior: smooth;">
-            <div onclick="window.location.href='god.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">👑</span>GOD
-            </div>
-            <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">💬</span>MIRROR
-            </div>
-            <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">🎮</span>LOGS
-            </div>
-            <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
-                <span class="text-xl block mb-1">📝</span>INPUT
-            </div>
-        </nav>
-    </div>
-
     <script>
         const CONFIG = {
             WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
             PRICING: {
-                Paket: [ 
-                    { name: "Malam", price: 50000 }, { name: "Pagi", price: 45000 }, { name: "Sore", price: 45000 }, { name: "Sultan 24H", price: 115000 } 
-                ],
-                Regular: [ 
-                    { name: "3 Jam", price: 30000 }, { name: "4 Jam", price: 40000 }, { name: "5 Jam", price: 50000 } 
-                ]
+                Paket: [ { name: "Malam", price: 50000 }, { name: "Pagi", price: 45000 }, { name: "Sore", price: 45000 }, { name: "Sultan 24H", price: 115000 } ],
+                Regular: [ { name: "3 Jam", price: 30000 }, { name: "4 Jam", price: 40000 }, { name: "5 Jam", price: 50000 } ]
             },
             UNITS: [ 
                 { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
@@ -130,13 +78,20 @@
 
         const APP = {
             init: () => {
-                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | SYSTEM MANAGER`;
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${STATE.user.role.toUpperCase()}`;
                 APP.loadDashboard();
             },
+
+            // Logika Back Button Berdasarkan Role
+            goBack: () => {
+                if (STATE.user.role === 'manager') window.location.href = 'manager.html';
+                else if (STATE.user.role === 'admin') window.location.href = 'admin.html';
+                else window.location.href = 'index.html';
+            },
+
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
             hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
-            logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
 
             api: async (p) => {
                 try {
@@ -147,9 +102,13 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI UNIT...');
-                // Perlu fetch dashboard agar kita bisa mengecek status unit mana yang terisi
-                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
+                // Fetch dashboard agar form input tahu mana unit yang kosong/terisi
+                let fetchRole = STATE.user.role;
+                let fetchBranch = fetchRole === 'manager' ? 'ALL' : STATE.user.branch;
+
+                const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
                 APP.hideLoader();
+                
                 let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; return d; }) : [];
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 
@@ -171,9 +130,18 @@
                 const maxDate = maxD.toISOString().slice(0,16);
                 const b = STATE.user.branch || ''; 
                 
+                // Cek Role: Jika admin, kunci cabang ke cabangnya sendiri
+                const selectCabangHtml = STATE.user.role === 'admin' 
+                    ? `<select id="r-branch" class="mario-input border-orange-400 bg-gray-200 cursor-not-allowed" disabled><option value="${b}">${b === 'Banda' ? 'Banda Aceh' : b}</option></select>` 
+                    : `<select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input border-orange-400">
+                           <option value="Banda" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
+                           <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
+                           <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
+                       </select>`;
+
                 return `
-                <div class="mario-card p-5 md:p-8 w-full">
-                    <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-2xl uppercase">INPUT TRANSAKSI</h2>
+                <div class="mario-card p-5 md:p-8 w-full shadow-[8px_8px_0px_#000]">
+                    <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-2xl uppercase">FORM TRANSAKSI BARU</h2>
                     <form onsubmit="APP.saveRental(event)" class="space-y-6">
                         
                         <div class="bg-gray-50 border-2 border-gray-300 p-4 rounded-xl shadow-sm">
@@ -189,11 +157,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label class="text-xs font-bold uppercase mb-1 block">Cabang</label>
-                                    <select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input border-orange-400">
-                                        <option value="Banda" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
-                                        <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
-                                        <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
-                                    </select>
+                                    ${selectCabangHtml}
                                 </div>
                                 <div><label class="text-xs font-bold uppercase mb-1 block">Pilih Unit (Hanya Kosong)</label><select id="r-unit" class="mario-input border-orange-400" required></select></div>
                             </div>
@@ -245,14 +209,14 @@
             },
             
             updateUnitOptions: () => {
-                const b = document.getElementById('r-branch').value; 
+                const branch = document.getElementById('r-branch').value; 
                 const logistikBox = document.getElementById('logistik-admin-container');
                 if(!document.getElementById('r-unit')) return;
                 
-                if (b === 'Banda') { logistikBox.classList.remove('hidden'); } 
+                if (branch === 'Banda') { logistikBox.classList.remove('hidden'); } 
                 else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
 
-                document.getElementById('r-unit').innerHTML = CONFIG.UNITS.filter(u => u.label.includes(b.toUpperCase().substring(0,4))).map(u => {
+                document.getElementById('r-unit').innerHTML = CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4))).map(u => {
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id}`;
