@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - Shareholder Portal</title>
+    
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { 
+            font-family: 'Fredoka', sans-serif; 
+            background-color: var(--mario-orange); 
+            color: var(--mario-black); 
+            -webkit-font-smoothing: antialiased; 
+            background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); 
+            background-size: 20px 20px; 
+        }
+        .mario-card { 
+            background-color: white; 
+            border: 4px solid var(--mario-black); 
+            border-radius: 16px; 
+            box-shadow: 6px 6px 0px 0px var(--mario-black); 
+        }
+        .mario-btn { 
+            background-color: white; 
+            border: 4px solid var(--mario-black); 
+            border-radius: 12px; 
+            box-shadow: 4px 4px 0px 0px var(--mario-black); 
+            transition: all 0.1s ease-in-out; 
+            font-weight: 700; 
+            text-align: center; 
+            cursor: pointer; 
+        }
+        .mario-btn:active { 
+            transform: translate(4px, 4px); 
+            box-shadow: 0px 0px 0px 0px var(--mario-black); 
+        }
+        
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="pb-10">
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        // Cek kalau role bukan Shareholder (sh_) atau Owner, tendang ke login!
+        if (!session || (!session.role.toLowerCase().startsWith('sh') && session.role !== 'owner')) {
+            alert("Akses Ditolak! Anda bukan Shareholder.");
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-white">MENARIK DATA...</h2>
+    </div>
+
+    <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+        <div>
+            <h1 class="text-lg font-black text-white">ARENA SHAREHOLDER</h1>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">Portal Pemantauan</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
+            <button onclick="APP.logout()" class="bg-red-500 text-white p-2 rounded-lg border-2 border-white">🚪</button>
+        </div>
+    </header>
+
+    <main id="app" class="max-w-md mx-auto p-4 mt-2 animate-pop">
+        
+        <section id="view-owner" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="mario-card p-4 bg-black text-center text-white">
+                    <p class="text-[9px] font-bold text-gray-400">OMSET BULAN INI</p>
+                    <p id="owner-omset-month" class="text-xl font-black text-yellow-400">Rp 0</p>
+                </div>
+                <div class="mario-card p-4 bg-[#FFE8B3] text-center">
+                    <p class="text-[9px] font-bold text-gray-600">OMSET HARI INI</p>
+                    <p id="owner-omset-today" class="text-xl font-black text-[#FF6B00]">Rp 0</p>
+                </div>
+            </div>
+            
+            <div class="mario-card p-4 bg-gray-100 border-gray-800 text-center mb-3">
+                <p class="text-[9px] font-bold text-gray-600 uppercase tracking-wider mb-1">Total Pengeluaran Bulan Ini</p>
+                <p id="owner-total-expense" class="text-2xl font-black text-red-600">Rp 0</p>
+            </div>
+
+            <div class="mario-card p-3 bg-red-100 border-red-600 text-center mb-4 relative overflow-hidden shadow-[4px_4px_0px_#dc2626]">
+                <div class="absolute -right-2 -top-2 opacity-20 text-5xl">💸</div>
+                <p class="text-[9px] font-bold text-red-800 uppercase tracking-wider mb-1">Potensi Cuan Hilang (Batal)</p>
+                <p id="owner-lost-income" class="text-2xl font-black text-red-600">Rp 0</p>
+            </div>
+
+            <div class="bg-black text-white p-2 rounded-lg text-center border-2 border-white mb-2 mt-4">
+                <p class="text-xs font-bold uppercase">RINCIAN PENGELUARAN</p>
+            </div>
+            <div id="owner-expenses" class="space-y-2 mb-6">
+                </div>
+
+            <div class="bg-black text-white p-2 rounded-lg text-center border-2 border-white mb-2 mt-4">
+                <p class="text-xs font-bold uppercase">RIWAYAT TRANSAKSI BULAN INI</p>
+            </div>
+            <div id="owner-logs" class="space-y-3 pb-6">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        const CONFIG = {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1"
+        };
+
+        const STATE = { 
+            user: session, 
+            logs: [],
+            expenses: []
+        };
+
+        const APP = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${STATE.user.branch.toUpperCase()}`;
+                APP.loadDashboard();
+            },
+
+            showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
+            hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
+            
+            getTodayStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
+            getMonthStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().substring(0,7); },
+
+            logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { 
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) 
+                    });
+                    if (!r.ok) return [];
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return null; }
+            },
+
+            loadDashboard: async () => {
+                APP.showLoader('SINKRONISASI...');
+                
+                // Fetch data dashboard. Kalau role Shareholder, pass branch mereka (misal: Sabang / Banda)
+                const res = await APP.api({ action: 'get_dashboard', role: STATE.user.role, branch: STATE.user.branch });
+                APP.hideLoader();
+
+                let raw = Array.isArray(res) ? res.map((i, idx) => {
+                    let data = i.json !== undefined ? i.json : i;
+                    data._dbIndex = idx; 
+                    return data;
+                }) : [];
+
+                // Pisahkan log transaksi & log pengeluaran
+                STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
+                STATE.expenses = raw.filter(i => i.pengeluaran_arena !== undefined);
+                
+                APP.renderOwnerDashboard();
+            },
+
+            renderOwnerDashboard: () => {
+                const branchStr = STATE.user.branch; 
+                const todayStr = APP.getTodayStr(); 
+                const monthStr = APP.getMonthStr(); 
+                
+                let omsetToday = 0; let omsetMonth = 0; let lostIncome = 0; let totalExpense = 0;
+                
+                // 1. FILTER & HITUNG TRANSAKSI (LOGS)
+                const ownerLogs = STATE.logs.filter(l => {
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    const dateStr = safeDate.substring(0,10);
+                    const isBranchMatch = (l.cabang_arena === branchStr || (branchStr === 'Banda Aceh' && l.cabang_arena === 'Banda') || (branchStr === 'Aceh Timur' && l.cabang_arena === 'Atim') || branchStr === 'Semua Cabang');
+                    
+                    return isBranchMatch && dateStr.startsWith(monthStr) && String(l.status_unit_arena).toLowerCase() !== 'pending' && String(l.status_unit_arena).toLowerCase() !== 'maintenance';
+                });
+
+                ownerLogs.forEach(l => {
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    let stat = String(l.status_unit_arena).toLowerCase();
+                    let nominal = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir_arena || l.ongkir) || 0);
+                    
+                    if (stat === 'batal') {
+                        lostIncome += nominal;
+                    } else {
+                        if (safeDate.substring(0,10) === todayStr) omsetToday += nominal;
+                        omsetMonth += nominal;
+                    }
+                });
+
+                // 2. FILTER & HITUNG PENGELUARAN (EXPENSES)
+                const ownerExps = STATE.expenses.filter(e => {
+                    const dStr = (e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran || '').substring(0,7);
+                    const eBranch = String(e.cabang_id_arena || e.cabang).toLowerCase();
+                    const isBranchMatch = (branchStr === 'Semua Cabang' || eBranch.includes(branchStr.toLowerCase()) || (branchStr === 'Banda Aceh' && eBranch.includes('banda')) || (branchStr === 'Aceh Timur' && eBranch.includes('atim')));
+                    
+                    return isBranchMatch && dStr === monthStr;
+                });
+
+                // Render List Pengeluaran
+                const expenseHtml = ownerExps.map(e => {
+                    const nominal = Number(e.jumlah_pengeluaran_arena || e.jumlah_pengeluaran || 0);
+                    totalExpense += nominal;
+                    return `
+                    <div class="mario-card p-3 border-2 border-black flex justify-between items-center shadow-[2px_2px_0px_#000]">
+                        <div>
+                            <p class="font-black text-xs uppercase">${e.pengeluaran_arena || e.pengeluaran}</p>
+                            <p class="text-[9px] font-bold text-gray-500">${e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran}</p>
+                        </div>
+                        <p class="font-black text-sm text-red-600">-${APP.formatRp(nominal)}</p>
+                    </div>`;
+                }).join('') || '<div class="mario-card p-4 text-center bg-gray-50"><p class="text-xs text-gray-500 font-bold">Belum ada pengeluaran bulan ini.</p></div>';
+
+                // Render List Transaksi
+                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                const logsHtml = ownerLogs.reverse().map(l => {
+                    let dayStr = '';
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    if (safeDate) {
+                        const dObj = new Date(safeDate.replace(' ', 'T'));
+                        if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
+                    }
+                    
+                    const stat = String(l.status_unit_arena).toLowerCase();
+                    const pay = String(l.pembayaran || 'belum').toLowerCase();
+                    const isBatal = stat === 'batal';
+                    const cancelerName = l.admin_name || l.Users || 'Sistem';
+                    
+                    const cardBg = isBatal ? 'bg-red-50 border-red-300 opacity-90' : 'bg-white border-black shadow-[2px_2px_0px_#000]';
+                    const textClass = isBatal ? 'line-through text-gray-500' : '';
+                    const dayClass = isBatal ? 'text-red-400' : 'text-[#FF6B00]';
+                    const priceClass = isBatal ? 'text-red-500 line-through' : 'text-green-600';
+                    const totalTagihan = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir_arena || l.ongkir) || 0);
+                    
+                    // Label Lunas / Belum
+                    let statusBayarBadge = '';
+                    if (!isBatal) {
+                        if (pay.includes('lunas')) {
+                            statusBayarBadge = `<span class="bg-green-100 text-green-700 border border-green-300 px-1 rounded text-[8px] font-black uppercase">LUNAS</span>`;
+                        } else {
+                            statusBayarBadge = `<span class="bg-red-100 text-red-600 border border-red-300 px-1 rounded text-[8px] font-black uppercase animate-pulse">BELUM BAYAR</span>`;
+                        }
+                    }
+
+                    const priceSection = isBatal 
+                        ? `<p class="font-black ${priceClass}">${APP.formatRp(totalTagihan)}</p><p class="text-[10px] font-black text-red-600 bg-red-100 px-1 rounded border border-red-300 inline-block mt-0.5">BATAL ❌</p>`
+                        : `<p class="font-black ${priceClass}">${APP.formatRp(totalTagihan)}</p><div class="flex flex-col items-end mt-0.5"><p class="text-[10px] font-bold text-gray-400 mb-1">${l.paket_arena}</p>${statusBayarBadge}</div>`;
+                        
+                    const batalInfo = isBatal ? `<p class="text-[9px] font-black text-red-600 mt-1 border-t border-red-200 pt-1">Dibatalkan oleh: ${cancelerName}</p>` : '';
+
+                    return `
+                    <div class="border-2 p-3 rounded-lg flex justify-between items-center text-xs ${cardBg}">
+                        <div>
+                            <p class="font-black text-sm leading-none mb-1 ${dayClass} ${textClass}">${dayStr}</p>
+                            <p class="font-black ${textClass}">${l.nama_pelanggan_arena} <span class="bg-gray-300 text-black px-1 rounded text-[10px] no-underline">U${l.unit_arena}</span></p>
+                            <p class="text-[10px] text-gray-500 font-bold ${textClass}">${safeDate.substring(0,16)}</p>
+                            ${batalInfo}
+                        </div>
+                        <div class="text-right">${priceSection}</div>
+                    </div>`
+                }).join('') || '<div class="mario-card p-4 text-center bg-gray-50"><p class="text-xs text-gray-500 font-bold">Belum ada transaksi di bulan ini.</p></div>';
+
+                // 3. UPDATE DOM
+                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday); 
+                document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
+                document.getElementById('owner-lost-income').innerText = APP.formatRp(lostIncome);
+                document.getElementById('owner-total-expense').innerText = APP.formatRp(totalExpense);
+                
+                document.getElementById('owner-expenses').innerHTML = expenseHtml;
+                document.getElementById('owner-logs').innerHTML = logsHtml;
+            }
+        };
+
+        // Initialize App
+        window.onload = APP.init;
+    </script>
+</body>
+</html>
