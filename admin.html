@@ -20,7 +20,6 @@
         .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
         .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
 
-        /* Loader */
         #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -32,22 +31,9 @@
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
-
-        /* UI/UX NAVIGASI BARU: Floating Dock (Mobile) & Sidebar (Desktop) */
-        .mobile-dock {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
-            border: 3px solid var(--mario-yellow); border-radius: 30px;
-            display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; z-index: 50;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .dock-item { color: white; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: bold; flex: 1; text-align: center; cursor: pointer; transition: color 0.2s; }
-        .dock-item.active { color: var(--mario-yellow); }
-        .dock-icon { font-size: 22px; margin-bottom: 2px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .dock-item:active .dock-icon { transform: scale(0.7); }
     </style>
 </head>
-<body class="md:bg-gray-100 flex h-screen overflow-hidden">
+<body class="pb-24">
 
     <script>
         const session = JSON.parse(localStorage.getItem('arena_session_v6'));
@@ -58,88 +44,83 @@
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <h2 id="loader-text" class="text-xl font-black text-white">SINKRONISASI DATA...</h2>
+        <h2 id="loader-text" class="text-xl font-black text-white">SINKRONISASI KPI...</h2>
     </div>
 
-    <aside class="hidden md:flex flex-col w-64 bg-black border-r-4 border-yellow-400 h-full shadow-2xl relative z-40">
-        <div class="p-6 border-b-2 border-gray-800 flex items-center gap-3">
-            <div class="bg-yellow-400 p-2 rounded-lg border-2 border-white"><span class="text-2xl">🎮</span></div>
-            <div>
-                <h1 class="text-lg font-black text-white leading-none">ARENA</h1>
-                <p class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mt-1">Admin Panel</p>
-            </div>
-        </div>
-        <nav class="flex-grow p-4 space-y-3 overflow-y-auto">
-            <button onclick="window.location.href='admin.html'" class="w-full mario-btn bg-yellow-400 text-black p-3 text-sm flex items-center gap-3 border-2 border-white"><span class="text-xl">🏠</span> Dashboard</button>
-            <button onclick="window.location.href='input.html'" class="w-full mario-btn bg-[#262626] text-white hover:bg-gray-700 p-3 text-sm flex items-center gap-3 border-2 border-black"><span class="text-xl">📝</span> Input Trx</button>
-            <button onclick="window.location.href='logs.html'" class="w-full mario-btn bg-[#262626] text-white hover:bg-gray-700 p-3 text-sm flex items-center gap-3 border-2 border-black"><span class="text-xl">📺</span> Logs Unit</button>
-            <button onclick="window.location.href='wamirror.html'" class="w-full mario-btn bg-[#25D366] text-white hover:bg-[#1da851] p-3 text-sm flex items-center gap-3 border-2 border-black"><span class="text-xl">💬</span> WA Mirror</button>
-        </nav>
-        <div class="p-4 border-t-2 border-gray-800">
-            <div class="bg-gray-900 p-3 rounded-xl border border-gray-700 mb-3">
-                <p class="text-[10px] text-gray-400 uppercase font-bold">Login sebagai:</p>
-                <p class="text-sm font-black text-white" id="sidebar-name">Admin</p>
-            </div>
-            <button onclick="APP.logout()" class="w-full mario-btn bg-red-600 text-white p-3 text-sm flex items-center justify-center gap-2 border-2 border-red-800">🚪 Logout</button>
-        </div>
-    </aside>
-
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
-        
-        <header class="md:hidden w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-lg flex justify-between items-center">
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-lg">
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white">
+                <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
                     <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="h-8 w-8 object-contain">
                 </div>
                 <div>
-                    <h1 class="text-lg font-black text-white leading-none">ARENA</h1>
-                    <p class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mt-1">DASHBOARD</p>
+                    <h1 class="text-lg font-black text-white leading-none">ARENA SYSTEM</h1>
+                    <p id="user-info-text" class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mt-1">ADMIN DASHBOARD</p>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white font-black text-xs">🔄</button>
-                <button onclick="APP.logout()" class="bg-red-500 text-white p-2 rounded-lg border-2 border-white font-black text-xs">🚪</button>
+                <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff] active:translate-y-1 active:shadow-none transition-all">🔄 <span class="hidden md:inline">REFRESH</span></button>
+                <button onclick="APP.logout()" class="bg-red-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff] active:translate-y-1 active:shadow-none transition-all">🚪 <span class="hidden md:inline">LOGOUT</span></button>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 md:pb-8 custom-scroll" id="app">
-            <div class="max-w-4xl mx-auto animate-pop">
-                <div class="mario-card p-6 md:p-8 mb-6 bg-white flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl md:text-3xl font-black uppercase text-gray-900">Halo, <span id="welcome-name" class="text-[#FF6B00]">Admin</span>! 👋</h2>
-                        <p class="text-xs md:text-sm font-bold text-gray-500 mt-1 uppercase tracking-widest">Cabang Operasional: <span id="welcome-branch" class="text-black"></span></p>
-                    </div>
-                    <div class="hidden md:block">
-                        <button onclick="APP.loadDashboard()" class="mario-btn bg-blue-500 text-white p-3 px-6 text-sm font-black border-2 border-black shadow-[4px_4px_0px_#000]">🔄 REFRESH DATA</button>
-                    </div>
+    <main id="app" class="max-w-4xl mx-auto p-4 mt-4 animate-pop">
+        
+        <div class="mario-card p-5 md:p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-black uppercase text-gray-800">Halo, <span id="welcome-name" class="text-[#FF6B00]">Admin</span>! 👋</h2>
+                <p class="text-xs font-bold text-gray-500 mt-1 uppercase">Cabang: <span id="welcome-branch"></span></p>
+            </div>
+
+            <div id="pending-container" class="w-full">
                 </div>
 
-                <div id="pending-container" class="w-full">
-                    </div>
+            <div id="kpi-container" class="w-full">
+                </div>
 
-                <div id="kpi-container" class="w-full mt-2">
-                    </div>
+            <h3 class="font-black text-center mt-8 mb-4 border-b-2 border-black pb-2 text-lg uppercase">Menu Utama</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="window.location.href='input.html'" class="mario-btn bg-yellow-400 text-black p-6 flex flex-col items-center justify-center border-4 border-black hover:bg-yellow-300">
+                    <span class="text-4xl mb-2 drop-shadow-md">📝</span>
+                    <span class="font-black text-sm uppercase">Input Transaksi</span>
+                    <span class="text-[10px] font-semibold text-gray-800 mt-1">Buat pesanan baru</span>
+                </button>
+                
+                <button onclick="window.location.href='logs.html'" class="mario-btn bg-white text-black p-6 flex flex-col items-center justify-center border-4 border-black hover:bg-gray-50">
+                    <span class="text-4xl mb-2 drop-shadow-md">🎮</span>
+                    <span class="font-black text-sm uppercase">Logs & Status</span>
+                    <span class="text-[10px] font-semibold text-gray-600 mt-1">Cek unit & ubah status</span>
+                </button>
+
+                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white p-6 flex flex-col items-center justify-center border-4 border-black hover:bg-[#20bd5a]">
+                    <span class="text-4xl mb-2 drop-shadow-md">💬</span>
+                    <span class="font-black text-sm uppercase">WA Mirror</span>
+                    <span class="text-[10px] font-semibold text-green-100 mt-1">Balas chat customer</span>
+                </button>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <div id="modal-acc" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2><div class="space-y-3 text-left"><label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label><select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button><button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button></div></div></div></div>
     <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
     <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
 
-    <div class="mobile-dock md:hidden">
-        <div onclick="window.location.href='admin.html'" class="dock-item active">
-            <span class="dock-icon">🏠</span>HOME
-        </div>
-        <div onclick="window.location.href='logs.html'" class="dock-item">
-            <span class="dock-icon">📺</span>LOGS
-        </div>
-        <div onclick="window.location.href='input.html'" class="dock-item">
-            <span class="dock-icon">📝</span>INPUT
-        </div>
-        <div onclick="window.location.href='wamirror.html'" class="dock-item text-[#25D366]">
-            <span class="dock-icon">💬</span>WA
-        </div>
+    <div class="bottom-nav-container md:hidden" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex justify-around items-center w-full" style="padding: 10px 0;">
+            <div onclick="window.location.href='admin.html'" style="text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black; flex: 1;">
+                <span class="text-xl block mb-1">🏠</span>HOME
+            </div>
+            <div onclick="window.location.href='logs.html'" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+        </nav>
     </div>
 
     <script>
@@ -163,20 +144,13 @@
             init: () => {
                 document.getElementById('welcome-name').innerText = STATE.user.username;
                 document.getElementById('welcome-branch').innerText = STATE.user.branch;
-                document.getElementById('sidebar-name').innerText = STATE.user.username.toUpperCase();
                 APP.loadDashboard();
             },
             
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
             hideLoader: () => document.getElementById('loader').classList.add('hidden'),
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
-            
-            // Mengambil bulan saat ini untuk filter KPI
-            getMonthStr: () => { 
-                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); 
-                return d.toISOString().substring(0,7); 
-            },
-
+            getTodayStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
             logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
 
             api: async (p) => {
@@ -188,7 +162,7 @@
             },
 
             loadDashboard: async () => {
-                APP.showLoader('SINKRONISASI DATA...');
+                APP.showLoader('SINKRONISASI KPI...');
                 const res = await APP.api({ action: 'get_dashboard', role: STATE.user.role, branch: STATE.user.branch });
                 APP.hideLoader();
 
@@ -201,6 +175,7 @@
 
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 
+                // Render Pesanan Baru & KPI Tracker
                 document.getElementById('pending-container').innerHTML = APP.renderPendingBookings();
                 document.getElementById('kpi-container').innerHTML = APP.renderAdminKPI();
             },
@@ -210,12 +185,12 @@
             // =====================================
             renderPendingBookings: () => {
                 const pending = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
-                if (pending.length === 0) return ''; 
+                if (pending.length === 0) return ''; // Sembunyikan jika tidak ada pesanan baru
                 
                 return `
-                <div class="mb-8 p-5 border-4 border-red-500 bg-red-100 rounded-2xl shadow-[6px_6px_0px_#ef4444] animate-pulse">
-                    <h3 class="font-black text-red-600 mb-4 text-center uppercase tracking-widest flex items-center justify-center gap-2 text-lg"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="mb-6 p-4 border-4 border-red-500 bg-red-100 rounded-xl shadow-[4px_4px_0px_#ef4444] animate-pulse">
+                    <h3 class="font-black text-red-600 mb-3 text-center uppercase tracking-widest flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         ${pending.map(l => {
                             const rId = l.id || l.row_number || l._rowIndex || ''; 
                             const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
@@ -223,18 +198,16 @@
                             const tglMainStr = safeDate.substring(0,10);
                             const ongTxt = Number(l.ongkir || l.ongkir_arena) > 0 ? `<br><span class="text-blue-600 text-xs">+ Ongkir ${APP.formatRp(l.ongkir || l.ongkir_arena)}</span>` : '';
                             return `
-                            <div class="border-2 border-black p-4 bg-white rounded-xl shadow-[4px_4px_0px_#000]">
-                                <div class="flex justify-between border-b border-dashed border-gray-300 pb-2 mb-2">
-                                    <p class="font-black text-base uppercase text-gray-800">${l.nama_pelanggan_arena}</p>
+                            <div class="border-2 border-black p-3 bg-white rounded-lg shadow-sm">
+                                <div class="flex justify-between">
+                                    <p class="font-black text-sm uppercase">${l.nama_pelanggan_arena}</p>
                                     <p class="font-black text-sm text-[#FF6B00] text-right">${APP.formatRp(l.tagihan_arena)}${ongTxt}</p>
                                 </div>
-                                <div class="mb-3">
-                                    <p class="text-[11px] font-bold text-gray-600 mb-1">Pesan: <span class="text-black">${l.paket_arena}</span></p>
-                                    <p class="text-[11px] font-bold text-red-600 bg-red-50 inline-block px-2 py-0.5 rounded border border-red-200">Main: ${safeDate.substring(0,16) || '-'}</p>
-                                </div>
-                                <div class="flex gap-2 pt-2 border-t-2 border-gray-100">
-                                    <button onclick="APP.openAccModal('${rId}', '${l.pembayaran}', '${l.cabang_arena}', '${tglMainStr}')" class="mario-btn bg-green-500 text-white p-2.5 text-xs font-black flex-1 border-green-700 hover:bg-green-400">ACC ✅</button>
-                                    <button onclick="APP.showCancelModal('${rId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn bg-red-500 text-white p-2.5 text-xs font-black flex-1 border-red-700 hover:bg-red-400">TOLAK ❌</button>
+                                <p class="text-[10px] font-bold text-gray-600 mb-1">Pesan: ${l.paket_arena} | ${cabLabel}</p>
+                                <p class="text-[10px] font-bold text-red-600 mb-3 bg-red-100 inline-block px-2 py-0.5 rounded border border-red-200">Main: ${safeDate.substring(0,16) || '-'}</p>
+                                <div class="flex gap-2 mt-2 border-t-2 border-dashed border-gray-300 pt-2">
+                                    <button onclick="APP.openAccModal('${rId}', '${l.pembayaran}', '${l.cabang_arena}', '${tglMainStr}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black flex-1 border-green-700">ACC ✅</button>
+                                    <button onclick="APP.showCancelModal('${rId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn bg-red-500 text-white p-2 text-xs font-black flex-1 border-red-700">TOLAK ❌</button>
                                 </div>
                             </div>`;
                         }).join('')}
@@ -254,122 +227,3 @@
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
-                    return `<option value="${u.id}">${label}</option>`;
-                }).join('');
-            },
-
-            openAccModal: (id, pay, branch, dateStr) => { 
-                STATE.activeAccId = id; STATE.activeAccPay = pay; 
-                document.getElementById('acc-modal-unit').innerHTML = APP.generateUnitOptionsHtml(branch, dateStr); 
-                document.getElementById('modal-acc').classList.remove('hidden'); 
-            },
-
-            confirmAccBooking: async () => { 
-                const unitSel = document.getElementById('acc-modal-unit').value;
-                if(!unitSel) { alert("Pilih unit terlebih dahulu bos!"); return; }
-                APP.closeModal('modal-acc'); APP.showLoader('MENGKONFIRMASI...'); 
-                await APP.api({ action: 'update_status', row_id: STATE.activeAccId, status_unit: 'booked', pembayaran: STATE.activeAccPay, unit: unitSel, admin_name: STATE.user.username, keterangan: '' }); 
-                await APP.loadDashboard(); 
-            },
-
-            // =====================================
-            // FITUR KPI TRACKER ADMIN (BULAN INI)
-            // =====================================
-            renderAdminKPI: () => {
-                const monthStr = APP.getMonthStr(); // 'YYYY-MM'
-                const myUsername = String(STATE.user.username).trim().toLowerCase();
-
-                // Saring data log BULAN INI dari tanggal 1 sampai saat ini
-                const myHandledLogs = STATE.logs.filter(l => {
-                    const stat = String(l.status_unit_arena || '').trim().toLowerCase();
-                    const safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
-                    
-                    // OPSI 1: Jika Booking Web, beri poin ke admin pemroses (Users)
-                    let creator = String(l.admin_creator || '').trim().toLowerCase();
-                    if (creator === 'self-booking' || creator === 'auto (web)' || creator === '') {
-                        creator = String(l.Users || l.admin_name || '').trim().toLowerCase();
-                    }
-                    
-                    // Hitung jika Adminnya sama & Tanggal main di BULAN INI
-                    return creator === myUsername && safeDate.startsWith(monthStr) && ['playing', 'main', 'finished', 'selesai'].includes(stat);
-                });
-
-                const count = myHandledLogs.length;
-                let bonusText = 'Kejar 27 trx untuk aman dari SP!';
-                let barColor = 'bg-blue-500';
-
-                if (count >= 40) { bonusText = '🎉 BONUS 20% TERKUCI!'; barColor = 'bg-green-500'; }
-                else if (count >= 35) { bonusText = '🔥 BONUS 15% TERKUCI! (Kejar 40 max)'; barColor = 'bg-yellow-400'; }
-                else if (count >= 27) { bonusText = '✅ TARGET AMAN! (Kejar 35 u/ Bonus 15%)'; barColor = 'bg-green-400'; }
-
-                let listHtml = myHandledLogs.map((l, i) => `
-                    <div class="flex justify-between items-center border-b border-dashed border-gray-300 py-2.5 px-3 hover:bg-gray-100 rounded transition-colors">
-                        <span class="text-xs font-bold truncate"><span class="text-blue-600 mr-2">${i+1}.</span> ${l.nama_pelanggan_arena}</span>
-                        <span class="text-[9px] bg-white border border-gray-400 px-2 py-1 rounded font-black shadow-sm uppercase">${String(l.status_unit_arena)}</span>
-                    </div>
-                `).join('');
-
-                if(myHandledLogs.length === 0) listHtml = '<p class="text-center text-xs text-gray-500 italic py-8">Belum ada pelanggan yang kamu proses bulan ini.</p>';
-
-                return `
-                <div class="border-4 border-black rounded-2xl p-6 bg-[#f8fafc] shadow-[6px_6px_0px_#000]">
-                    <h3 class="font-black text-[#FF6B00] mb-5 text-center uppercase border-b-2 border-black pb-3 flex items-center justify-center gap-2 text-lg"><span>🎯</span> TRACKER KPI (BULAN INI)</h3>
-                    
-                    <div class="flex justify-between items-end mb-3">
-                        <span class="text-sm font-black text-gray-700">Total Dihandle: <span class="text-3xl text-[#FF6B00] ml-1">${count}</span></span>
-                        <span class="text-[10px] font-bold text-gray-500 uppercase bg-gray-200 px-2 py-1 rounded-md">Target: 27 - 40</span>
-                    </div>
-                    
-                    <div class="w-full bg-gray-300 rounded-full h-6 border-2 border-black relative overflow-hidden mb-4 shadow-inner">
-                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width: ${Math.min((count/40)*100, 100)}%"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(27/40)*100}%;"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(35/40)*100}%;"></div>
-                    </div>
-                    
-                    <p class="text-sm font-black text-center mb-5 ${count >= 27 ? 'text-green-600' : 'text-red-500'} bg-white py-2 rounded-lg border-2 border-dashed border-gray-300">${bonusText}</p>
-                    
-                    <div class="flex gap-2 mb-6">
-                        <div class="flex-1 text-center border-2 border-black rounded-lg py-2 ${count >= 27 ? 'bg-green-400' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[3px_3px_0px_#000] transition-all">
-                            <p class="text-[10px] font-black uppercase">Aman (27)</p>
-                        </div>
-                        <div class="flex-1 text-center border-2 border-black rounded-lg py-2 ${count >= 35 ? 'bg-yellow-400' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[3px_3px_0px_#000] transition-all">
-                            <p class="text-[10px] font-black uppercase">+15% (35)</p>
-                        </div>
-                        <div class="flex-1 text-center border-2 border-black rounded-lg py-2 ${count >= 40 ? 'bg-blue-500 text-white' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[3px_3px_0px_#000] transition-all">
-                            <p class="text-[10px] font-black uppercase">+20% (40)</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border-2 border-black rounded-xl max-h-[180px] overflow-y-auto custom-scroll shadow-inner">
-                        <div class="sticky top-0 bg-gray-800 text-white text-center z-10 border-b-2 border-black">
-                            <p class="text-[10px] font-black py-2 tracking-widest uppercase">Buku Saku (Sukses Dihandle)</p>
-                        </div>
-                        <div class="p-1">${listHtml}</div>
-                    </div>
-                </div>
-                `;
-            },
-
-            // =====================================
-            // FUNGSI MODAL LAINNYA
-            // =====================================
-            closeModal: (id) => { document.getElementById(id).classList.add('hidden'); },
-            toggleCancelOther: () => { document.getElementById('cancel-other').classList.toggle('hidden', document.getElementById('cancel-reason').value !== 'Lainnya'); },
-            showCancelModal: (id, pay, unit) => { STATE.activeModalRowId = id; STATE.activeModalPay = pay; STATE.activeModalUnit = unit || '1'; document.getElementById('cancel-reason').value = 'Telat Respon'; document.getElementById('cancel-other').value = ''; document.getElementById('cancel-other').classList.add('hidden'); document.getElementById('modal-cancel').classList.remove('hidden'); },
-            confirmCancel: async () => { 
-                let r = document.getElementById('cancel-reason').value; if (r === 'Lainnya') r = document.getElementById('cancel-other').value || 'Alasan tidak disebutkan'; 
-                APP.closeModal('modal-cancel'); APP.showLoader('MEMBATALKAN...'); 
-                await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: 'batal', pembayaran: STATE.activeModalPay, unit: STATE.activeModalUnit || '1', admin_name: STATE.user.username, keterangan: r }); 
-                await APP.loadDashboard(); 
-            },
-            confirmPayment: async (method) => { 
-                APP.closeModal('modal-payment'); APP.showLoader('UPDATE BAYAR...'); 
-                await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: STATE.activeModalStat, pembayaran: `Lunas ${method}`, unit: STATE.activeModalUnit, admin_name: STATE.user.username, keterangan: '' }); 
-                await APP.loadDashboard(); 
-            }
-        };
-
-        window.onload = APP.init;
-    </script>
-</body>
-</html>
