@@ -35,7 +35,7 @@
         .animate-pop { animation: popIn 0.3s forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
-        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
@@ -52,10 +52,9 @@
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
+        <h2 id="loader-text" class="text-xl font-black text-white tracking-widest uppercase">MEMUAT SISTEM...</h2>
     </div>
 
-    <!-- HEADER & NAVIGASI PC -->
     <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div class="max-w-7xl mx-auto header-container">
             <div class="header-top-row flex justify-between items-center gap-4">
@@ -72,13 +71,8 @@
                 </div>
             </div>
 
-            <!-- Navigasi Desktop -->
-            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full">
-                <button onclick="window.location.href='god-mode.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-yellow-400">👑 GOD</button>
-                <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-green-400">💬 MIRROR</button>
-                <button onclick="window.location.href='logs.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-white shadow-[2px_2px_0px_#FFD700]">🎮 LOGS</button>
-                <button onclick="window.location.href='input.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-gray-200">📝 INPUT</button>
-            </nav>
+            <nav id="pc-nav" class="flex flex-wrap justify-center gap-2 mt-3 w-full" id="desktop-nav-container">
+                </nav>
         </div>
     </header>
 
@@ -86,28 +80,11 @@
         <div id="main-content" class="w-full mx-auto space-y-6"></div>
     </main>
 
-    <!-- Navigasi Mobile -->
     <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
-        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 20px; scroll-behavior: smooth;">
-            <div onclick="APP.goBack()" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">🏠</span>HOME
-            </div>
-            <div onclick="window.location.href='god-mode.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">👑</span>GOD
-            </div>
-            <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">💬</span>MIRROR
-            </div>
-            <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
-                <span class="text-xl block mb-1">🎮</span>LOGS
-            </div>
-            <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
-                <span class="text-xl block mb-1">📝</span>INPUT
-            </div>
-        </nav>
+        <nav class="flex overflow-x-auto whitespace-nowrap custom-scroll" style="padding: 10px 15px; gap: 20px; scroll-behavior: smooth;" id="mobile-nav-container">
+            </nav>
     </div>
 
-    <!-- Modals -->
     <div id="modal-acc" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2><div class="space-y-3 text-left"><label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label><select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button><button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button></div></div></div></div>
     <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
     <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
@@ -131,6 +108,7 @@
         const APP = {
             init: () => {
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${STATE.user.role.toUpperCase()}`;
+                APP.renderNavigations();
                 APP.loadDashboard();
             },
             
@@ -140,10 +118,48 @@
                 else window.location.href = 'index.html';
             },
 
+            renderNavigations: () => {
+                const pcNav = document.getElementById('pc-nav');
+                const mobNav = document.getElementById('mobile-nav-container');
+                let pcHtml = '';
+                let mobHtml = `
+                    <div onclick="APP.goBack()" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                        <span class="text-xl block mb-1">🏠</span>HOME
+                    </div>`;
+
+                if (STATE.user.role === 'manager') {
+                    pcHtml += `<button onclick="window.location.href='god-mode.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-yellow-400">👑 GOD</button>`;
+                    mobHtml += `
+                        <div onclick="window.location.href='god-mode.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                            <span class="text-xl block mb-1">👑</span>GOD
+                        </div>`;
+                }
+                
+                pcHtml += `
+                    <button onclick="window.location.href='wamirror.html'" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-green-400">💬 MIRROR</button>
+                    <button onclick="window.location.href='logs.html'" class="mario-btn bg-black text-white px-3 py-2 text-[10px] md:text-xs font-black border-2 border-white shadow-[2px_2px_0px_#FFD700]">🎮 LOGS</button>
+                    <button onclick="window.location.href='input.html'" class="mario-btn bg-white text-black px-3 py-2 text-[10px] md:text-xs font-black border-2 border-black hover:bg-gray-200">📝 INPUT</button>
+                `;
+                
+                mobHtml += `
+                    <div onclick="window.location.href='wamirror.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px;">
+                        <span class="text-xl block mb-1">💬</span>MIRROR
+                    </div>
+                    <div onclick="window.location.href='logs.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black;">
+                        <span class="text-xl block mb-1">🎮</span>LOGS
+                    </div>
+                    <div onclick="window.location.href='input.html'" style="min-width: 50px; text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px;">
+                        <span class="text-xl block mb-1">📝</span>INPUT
+                    </div>
+                `;
+
+                pcNav.innerHTML = pcHtml;
+                mobNav.innerHTML = mobHtml;
+            },
+
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
             hideLoader: () => { document.getElementById('loader').classList.add('hidden'); },
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
-            getTodayStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
             getMonthStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().substring(0,7); },
 
             api: async (p) => {
@@ -155,7 +171,10 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI DATA...');
-                const res = await APP.api({ action: 'get_dashboard', role: STATE.user.role, branch: STATE.user.branch });
+                const fetchRole = STATE.user.role === 'manager' ? 'admin' : STATE.user.role;
+                const fetchBranch = STATE.user.role === 'manager' ? 'ALL' : STATE.user.branch;
+
+                const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
                 APP.hideLoader();
                 
                 let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; d._dbIndex = idx; return d; }) : [];
@@ -171,63 +190,13 @@
             },
 
             generateUnitOptionsHtml: (branch, dateStr) => {
-                return CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4))).map(u => {
+                let allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(String(branch || '').toUpperCase().substring(0,4)));
+                return allowedUnits.map(u => {
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
                     return `<option value="${u.id}">${label}</option>`;
                 }).join('');
-            },
-
-            renderAdminKPI: () => {
-                const todayStr = APP.getTodayStr();
-                const myUsername = String(STATE.user.username).toLowerCase();
-
-                const myHandledLogs = STATE.logs.filter(l => {
-                    const stat = String(l.status_unit_arena).toLowerCase();
-                    const safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
-                    const logDate = safeDate.substring(0, 10);
-                    const creator = String(l.admin_creator || l.Users || '').toLowerCase();
-                    return creator === myUsername && logDate === todayStr && ['playing', 'main', 'finished', 'selesai'].includes(stat);
-                });
-
-                const count = myHandledLogs.length;
-                let bonusText = 'Kejar 27 trx untuk aman dari SP!';
-                let barColor = 'bg-blue-500';
-
-                if (count >= 40) { bonusText = '🎉 BONUS 20% TERKUCI!'; barColor = 'bg-green-500'; }
-                else if (count >= 35) { bonusText = '🔥 BONUS 15% TERKUCI! (Kejar 40 max)'; barColor = 'bg-yellow-400'; }
-                else if (count >= 27) { bonusText = '✅ TARGET AMAN! (Kejar 35 u/ Bonus 15%)'; barColor = 'bg-green-400'; }
-
-                let listHtml = myHandledLogs.map((l, i) => `
-                    <div class="flex justify-between items-center border-b border-dashed border-gray-300 py-1.5 px-2 hover:bg-gray-100 rounded">
-                        <span class="text-[10px] font-bold truncate"><span class="text-blue-600 mr-1">${i+1}.</span> ${l.nama_pelanggan_arena}</span>
-                        <span class="text-[8px] bg-white border border-gray-400 px-1.5 py-0.5 rounded font-black shadow-sm">${String(l.status_unit_arena).toUpperCase()}</span>
-                    </div>
-                `).join('');
-
-                if(myHandledLogs.length === 0) listHtml = '<p class="text-center text-[10px] text-gray-500 italic py-3">Belum ada pelanggan yang kamu proses hari ini.</p>';
-
-                return `
-                <div class="mb-6 border-4 border-black rounded-xl p-4 bg-[#f8fafc] shadow-[4px_4px_0px_#000]">
-                    <h3 class="font-black text-[#FF6B00] mb-2 text-center uppercase border-b-2 border-black pb-2 flex items-center justify-center gap-1"><span>🎯</span> TRACKER KPI SAYA</h3>
-                    <div class="flex justify-between items-end mb-1">
-                        <span class="text-xs font-black">Total Dihandle: <span class="text-xl text-[#FF6B00]">${count}</span></span>
-                        <span class="text-[9px] font-bold text-gray-500">Min: 27 | Max: 40</span>
-                    </div>
-                    <div class="w-full bg-gray-300 rounded-full h-4 border-2 border-black relative overflow-hidden mb-2">
-                        <div class="${barColor} h-full transition-all duration-500" style="width: ${Math.min((count/40)*100, 100)}%"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(27/40)*100}%;"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(35/40)*100}%;"></div>
-                    </div>
-                    <p class="text-[10px] font-black text-center mb-3 ${count >= 27 ? 'text-green-600' : 'text-red-500'}">${bonusText}</p>
-                    <div class="bg-white border-2 border-black rounded-lg max-h-[120px] overflow-y-auto custom-scroll">
-                        <div class="sticky top-0 bg-gray-800 text-white text-center">
-                            <p class="text-[9px] font-black py-1 tracking-widest">BUKU SAKU (HARI INI)</p>
-                        </div>
-                        <div class="p-1">${listHtml}</div>
-                    </div>
-                </div>`;
             },
 
             renderLogsUI: () => {
@@ -263,9 +232,13 @@
                     </div>`;
                 }
 
-                // Tampilkan Unit Lengkap untuk semua role
+                let allowedUnits = CONFIG.UNITS;
+                if (STATE.user.role === 'admin') {
+                    allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(STATE.user.branch.toUpperCase().substring(0,4)));
+                }
+
                 let uHtml = '<div class="flex overflow-x-auto md:grid md:grid-cols-7 gap-3 mb-4 custom-scroll pb-2">';
-                CONFIG.UNITS.forEach(u => {
+                allowedUnits.forEach(u => {
                     const s = APP.getUnitStatusRaw(u.id); 
                     let bg = 'bg-green-500 text-white border-green-700'; let txt = 'KOSONG';
                     if(['playing','main'].includes(s)){ bg = 'bg-red-600 text-white border-red-800'; txt = 'PLAYING'; } 
@@ -280,19 +253,22 @@
                 });
                 uHtml += '</div>';
 
+                const filterCabangHtml = STATE.user.role === 'manager' 
+                    ? `<select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
+                        <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
+                       </select>` 
+                    : `<input type="hidden" id="log-filter-cabang" value="${STATE.user.branch}">`;
+
                 return `
                     <div class="mario-card p-4 md:p-6 animate-pop w-full mx-auto">
                         ${pnl}
-                        ${APP.renderAdminKPI()}
-                        <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status 7 Unit</h2>
+                        <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status Unit</h2>
                         ${uHtml}
                         <div class="flex flex-col md:flex-row justify-between md:items-end mb-3 mt-6 border-t-2 border-dashed border-gray-400 pt-4 gap-3">
                             <h3 class="font-black text-sm uppercase">LOGS BULAN INI</h3>
                             <div class="flex gap-2 w-full md:w-auto">
-                                <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
-                                    <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
-                                </select>
-                                <select id="log-filter-status" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold text-gray-700 w-1/2 md:w-auto">
+                                ${filterCabangHtml}
+                                <select id="log-filter-status" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold text-gray-700 w-full md:w-auto ${STATE.user.role === 'admin' ? 'w-full' : 'w-1/2'}">
                                     <option value="ALL">Semua Status</option><option value="booked">Booked ⏳</option><option value="playing">Playing 🔴</option><option value="finished">Finished ✅</option><option value="batal">Batal ❌</option>
                                 </select>
                             </div>
@@ -309,6 +285,8 @@
 
             getLogListHTML: (cabFilter, statFilter) => {
                 const mStr = APP.getMonthStr(); 
+                
+                if (STATE.user.role === 'admin') cabFilter = STATE.user.branch;
 
                 const filtered = STATE.logs.filter(l => {
                     const s = String(l.status_unit_arena).toLowerCase();
@@ -409,7 +387,6 @@
                 </div>`;
             },
 
-            // Modal Handlers
             closeModal: (id) => { document.getElementById(id).classList.add('hidden'); },
             handleStatusChange: (selectEl, id, pay, unit) => { 
                 const newVal = selectEl.value; 
