@@ -17,6 +17,9 @@
         .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
         .mario-btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
         
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
+
         #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -27,6 +30,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="pb-24">
@@ -43,8 +47,7 @@
         <h2 id="loader-text" class="text-xl font-black text-white">SINKRONISASI KPI...</h2>
     </div>
 
-    <!-- HEADER DASHBOARD ADMIN -->
-    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-lg">
         <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-[2px_2px_0px_#000]">
@@ -64,19 +67,18 @@
 
     <main id="app" class="max-w-4xl mx-auto p-4 mt-4 animate-pop">
         
-        <!-- DASHBOARD CONTAINER -->
         <div class="mario-card p-5 md:p-8">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-black uppercase text-gray-800">Halo, <span id="welcome-name" class="text-[#FF6B00]">Admin</span>! 👋</h2>
                 <p class="text-xs font-bold text-gray-500 mt-1 uppercase">Cabang: <span id="welcome-branch"></span></p>
             </div>
 
-            <!-- KPI TRACKER AREA -->
-            <div id="kpi-container" class="w-full">
-                <!-- KPI dirender dari JavaScript -->
-            </div>
+            <div id="pending-container" class="w-full">
+                </div>
 
-            <!-- NAVIGATION MENU -->
+            <div id="kpi-container" class="w-full">
+                </div>
+
             <h3 class="font-black text-center mt-8 mb-4 border-b-2 border-black pb-2 text-lg uppercase">Menu Utama</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button onclick="window.location.href='input.html'" class="mario-btn bg-yellow-400 text-black p-6 flex flex-col items-center justify-center border-4 border-black hover:bg-yellow-300">
@@ -100,7 +102,10 @@
         </div>
     </main>
 
-    <!-- NAVIGASI MOBILE (BOTTOM NAV) -->
+    <div id="modal-acc" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2><div class="space-y-3 text-left"><label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label><select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button><button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button></div></div></div></div>
+    <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
+    <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
+
     <div class="bottom-nav-container md:hidden" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
         <nav class="flex justify-around items-center w-full" style="padding: 10px 0;">
             <div onclick="window.location.href='admin.html'" style="text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black; flex: 1;">
@@ -120,12 +125,19 @@
 
     <script>
         const CONFIG = {
-            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1"
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1",
+            UNITS: [ 
+                { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, 
+                { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
+            ]
         };
 
         const STATE = { 
             user: session, 
-            logs: []
+            logs: [],
+            activeModalRowId: null, activeModalStat: null, activeModalUnit: null, activeModalPay: null,
+            activeAccId: null, activeAccPay: null
         };
 
         const APP = {
@@ -137,8 +149,8 @@
             
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
             hideLoader: () => document.getElementById('loader').classList.add('hidden'),
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
             getTodayStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
-            
             logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
 
             api: async (p) => {
@@ -157,95 +169,61 @@
                 let raw = Array.isArray(res) ? res.map((i, idx) => {
                     let data = i.json !== undefined ? i.json : i;
                     if (i.id !== undefined && data.id === undefined) { data.id = i.id; }
+                    data._dbIndex = idx;
                     return data;
                 }) : [];
 
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 
-                // Render KPI Tracker
+                // Render Pesanan Baru & KPI Tracker
+                document.getElementById('pending-container').innerHTML = APP.renderPendingBookings();
                 document.getElementById('kpi-container').innerHTML = APP.renderAdminKPI();
             },
 
-            renderAdminKPI: () => {
-                const todayStr = APP.getTodayStr();
-                const myUsername = String(STATE.user.username).toLowerCase();
-
-                // Saring data log hari ini yang valid (playing/finished/selesai)
-                const myHandledLogs = STATE.logs.filter(l => {
-                    const stat = String(l.status_unit_arena).toLowerCase();
-                    const safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
-                    const logDate = safeDate.substring(0, 10);
-                    
-                    // Prioritas membaca admin_creator (supaya tidak tertimpa saat status diganti orang lain)
-                    let creator = String(l.admin_creator || '').toLowerCase();
-                    // Jika ini hasil booking otomatis, berikan poin KPI ke admin yang mengurus (Users)
-                    if (creator === 'self-booking' || creator === 'auto (web)' || creator === '') {
-                        creator = String(l.Users || '').toLowerCase();
-                    }
-                    
-                    return creator === myUsername && logDate === todayStr && ['playing', 'main', 'finished', 'selesai'].includes(stat);
-                });
-
-                const count = myHandledLogs.length;
-                let bonusText = 'Kejar 27 trx untuk aman dari SP!';
-                let barColor = 'bg-blue-500';
-
-                if (count >= 40) { bonusText = '🎉 BONUS 20% TERKUCI!'; barColor = 'bg-green-500'; }
-                else if (count >= 35) { bonusText = '🔥 BONUS 15% TERKUCI! (Kejar 40 max)'; barColor = 'bg-yellow-400'; }
-                else if (count >= 27) { bonusText = '✅ TARGET AMAN! (Kejar 35 u/ Bonus 15%)'; barColor = 'bg-green-400'; }
-
-                let listHtml = myHandledLogs.map((l, i) => `
-                    <div class="flex justify-between items-center border-b border-dashed border-gray-300 py-2 px-3 hover:bg-gray-100 rounded transition-colors">
-                        <span class="text-xs font-bold truncate"><span class="text-blue-600 mr-1">${i+1}.</span> ${l.nama_pelanggan_arena}</span>
-                        <span class="text-[9px] bg-white border border-gray-400 px-2 py-0.5 rounded font-black shadow-sm uppercase">${String(l.status_unit_arena)}</span>
-                    </div>
-                `).join('');
-
-                if(myHandledLogs.length === 0) listHtml = '<p class="text-center text-xs text-gray-500 italic py-6">Belum ada pelanggan yang kamu proses hari ini.</p>';
-
+            // =====================================
+            // FITUR PENDING BOOKING (ACC) DI DASHBOARD
+            // =====================================
+            renderPendingBookings: () => {
+                const pending = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
+                if (pending.length === 0) return ''; // Sembunyikan jika tidak ada pesanan baru
+                
                 return `
-                <div class="mb-2 border-4 border-black rounded-xl p-5 bg-[#f8fafc] shadow-[4px_4px_0px_#000]">
-                    <h3 class="font-black text-[#FF6B00] mb-4 text-center uppercase border-b-2 border-black pb-3 flex items-center justify-center gap-2 text-lg"><span>🎯</span> TRACKER KPI HARI INI</h3>
-                    
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-sm font-black">Total Dihandle: <span class="text-2xl text-[#FF6B00]">${count}</span></span>
-                        <span class="text-[10px] font-bold text-gray-500 uppercase">Target Min: 27 | Max: 40</span>
+                <div class="mb-6 p-4 border-4 border-red-500 bg-red-100 rounded-xl shadow-[4px_4px_0px_#ef4444] animate-pulse">
+                    <h3 class="font-black text-red-600 mb-3 text-center uppercase tracking-widest flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${pending.map(l => {
+                            const rId = l.id || l.row_number || l._rowIndex || ''; 
+                            const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                            let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                            const tglMainStr = safeDate.substring(0,10);
+                            const ongTxt = Number(l.ongkir || l.ongkir_arena) > 0 ? `<br><span class="text-blue-600 text-xs">+ Ongkir ${APP.formatRp(l.ongkir || l.ongkir_arena)}</span>` : '';
+                            return `
+                            <div class="border-2 border-black p-3 bg-white rounded-lg shadow-sm">
+                                <div class="flex justify-between">
+                                    <p class="font-black text-sm uppercase">${l.nama_pelanggan_arena}</p>
+                                    <p class="font-black text-sm text-[#FF6B00] text-right">${APP.formatRp(l.tagihan_arena)}${ongTxt}</p>
+                                </div>
+                                <p class="text-[10px] font-bold text-gray-600 mb-1">Pesan: ${l.paket_arena} | ${cabLabel}</p>
+                                <p class="text-[10px] font-bold text-red-600 mb-3 bg-red-100 inline-block px-2 py-0.5 rounded border border-red-200">Main: ${safeDate.substring(0,16) || '-'}</p>
+                                <div class="flex gap-2 mt-2 border-t-2 border-dashed border-gray-300 pt-2">
+                                    <button onclick="APP.openAccModal('${rId}', '${l.pembayaran}', '${l.cabang_arena}', '${tglMainStr}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black flex-1 border-green-700">ACC ✅</button>
+                                    <button onclick="APP.showCancelModal('${rId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn bg-red-500 text-white p-2 text-xs font-black flex-1 border-red-700">TOLAK ❌</button>
+                                </div>
+                            </div>`;
+                        }).join('')}
                     </div>
-                    
-                    <div class="w-full bg-gray-300 rounded-full h-5 border-2 border-black relative overflow-hidden mb-3">
-                        <div class="${barColor} h-full transition-all duration-500" style="width: ${Math.min((count/40)*100, 100)}%"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(27/40)*100}%;"></div>
-                        <div class="absolute top-0 bottom-0 border-l-2 border-black" style="left: ${(35/40)*100}%;"></div>
-                    </div>
-                    
-                    <p class="text-xs font-black text-center mb-4 ${count >= 27 ? 'text-green-600' : 'text-red-500'}">${bonusText}</p>
-                    
-                    <div class="flex gap-2 mb-4">
-                        <div class="flex-1 text-center border-2 border-black rounded py-1.5 ${count >= 27 ? 'bg-green-400' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[2px_2px_0px_#000] transition-all">
-                            <p class="text-[9px] md:text-[10px] font-black uppercase">Aman (27)</p>
-                        </div>
-                        <div class="flex-1 text-center border-2 border-black rounded py-1.5 ${count >= 35 ? 'bg-yellow-400' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[2px_2px_0px_#000] transition-all">
-                            <p class="text-[9px] md:text-[10px] font-black uppercase">+15% (35)</p>
-                        </div>
-                        <div class="flex-1 text-center border-2 border-black rounded py-1.5 ${count >= 40 ? 'bg-blue-500 text-white' : 'bg-gray-200 opacity-60 shadow-none'} shadow-[2px_2px_0px_#000] transition-all">
-                            <p class="text-[9px] md:text-[10px] font-black uppercase">+20% (40)</p>
-                        </div>
-                    </div>
+                </div>`;
+            },
 
-                    <div class="bg-white border-2 border-black rounded-lg max-h-[160px] overflow-y-auto custom-scroll shadow-inner">
-                        <div class="sticky top-0 bg-gray-800 text-white text-center z-10 border-b-2 border-black">
-                            <p class="text-[10px] font-black py-1.5 tracking-widest uppercase">Buku Saku (Sukses Dihandle)</p>
-                        </div>
-                        <div class="p-1">${listHtml}</div>
-                    </div>
-                </div>
-                `;
-            }
-        };
+            getUnitStatusRaw: (uNum) => {
+                const logs = STATE.logs.filter(l => String(l.unit_arena).replace(/\D/g, '') === String(uNum));
+                logs.sort((a,b) => new Date(String(b.jam_mulai_sewa || b.createdAt).replace(' ','T')) - new Date(String(a.jam_mulai_sewa || a.createdAt).replace(' ','T')));
+                return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
+            },
 
-        window.onload = APP.init;
-    </script>
-</body>
-</html>
-
-```
+            generateUnitOptionsHtml: (branch, dateStr) => {
+                let allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(String(branch || '').toUpperCase().substring(0,4)));
+                return allowedUnits.map(u => {
+                    const stat = APP.getUnitStatusRaw(u.id);
+                    if (stat === 'maintenance') return '';
+                    let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
