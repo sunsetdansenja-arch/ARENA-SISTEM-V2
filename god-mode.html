@@ -20,23 +20,35 @@
     
     <style>
         :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
-        body { font-family: 'Fredoka', sans-serif; background-color: #1a1a1a; color: white; -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(255,255,255,0.05) 2px, transparent 2px); background-size: 20px 20px; }
-        .mario-card { background-color: #262626; border: 4px solid var(--mario-yellow); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-yellow); color: white; }
-        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; color: black; }
-        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        body { font-family: 'Fredoka', sans-serif; background-color: #121212; color: white; -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(255,255,255,0.05) 2px, transparent 2px); background-size: 24px 24px; }
+        
+        /* Custom Cards & Buttons */
+        .mario-card { background-color: #1e1e1e; border: 3px solid #333; border-radius: 16px; box-shadow: 6px 6px 0px 0px rgba(0,0,0,0.5); color: white; transition: all 0.3s ease; }
+        .mario-card:hover { border-color: var(--mario-yellow); box-shadow: 6px 6px 0px 0px var(--mario-yellow); transform: translateY(-2px); }
+        
+        .mario-btn { background-color: white; border: 3px solid var(--mario-black); border-radius: 10px; box-shadow: 3px 3px 0px 0px var(--mario-black); transition: all 0.15s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; color: black; }
+        .mario-btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
         .mario-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .mario-input { width: 100%; background-color: #333; border: 3px solid var(--mario-yellow); border-radius: 8px; padding: 10px; font-weight: 600; color: white; outline: none; }
-        .mario-input:focus { background-color: #444; }
+        
+        .mario-input { width: 100%; background-color: #2a2a2a; border: 2px solid #555; border-radius: 8px; padding: 12px; font-weight: 600; color: white; outline: none; transition: border-color 0.2s; }
+        .mario-input:focus { border-color: var(--mario-yellow); background-color: #333; }
+        
+        /* Loader & Animations */
         #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .spinner { width: 50px; height: 50px; border: 6px solid #333; border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
-        .animate-pop { animation: popIn 0.3s forwards; }
-        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95) translateY(10px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
         
+        /* Scrollbar */
         .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #555; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--mario-yellow); }
+
+        /* Typography */
+        .font-num { font-family: 'Inter', sans-serif; letter-spacing: -0.03em; }
     </style>
 </head>
 <body class="pb-10">
@@ -48,97 +60,137 @@
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <h2 id="loader-text" class="text-xl font-black text-yellow-400 tracking-widest">SINKRONISASI DATA...</h2>
+        <h2 id="loader-text" class="text-xl font-black text-yellow-400 tracking-widest uppercase">SINKRONISASI DATA...</h2>
     </div>
 
-    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- HEADER -->
+    <header class="w-full bg-[#111] p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-xl">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="bg-yellow-400 p-2 rounded-lg border-2 border-white shadow-[2px_2px_0px_#fff]"><span class="text-xl">👑</span></div>
+                <div class="bg-yellow-400 p-2 rounded-lg border-2 border-black shadow-[2px_2px_0px_#000]"><span class="text-xl">👑</span></div>
                 <div>
-                    <h1 class="text-xl font-black text-yellow-400 leading-none">GOD MODE</h1>
-                    <p id="user-info-text" class="text-[10px] font-bold text-white uppercase tracking-widest mt-1">SINKRONISASI...</p>
+                    <h1 class="text-xl font-black text-yellow-400 leading-none tracking-wide">GOD MODE</h1>
+                    <p id="user-info-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">SINKRONISASI...</p>
                 </div>
             </div>
-            <div class="flex gap-2 w-full md:w-auto justify-end">
-                <button onclick="window.location.href='manager.html'" class="mario-btn bg-gray-200 text-black p-2 md:px-4 rounded-lg text-xs">⬅️ KEMBALI</button>
-                <button onclick="GOD.loadData()" class="bg-blue-500 text-white p-2 md:px-4 rounded-lg border-2 border-white font-black text-xs shadow-[2px_2px_0px_#fff]">🔄 REFRESH</button>
+            <div class="flex gap-3 w-full md:w-auto justify-end">
+                <button onclick="window.location.href='manager.html'" class="mario-btn bg-gray-200 text-black px-4 py-2 text-xs font-black shadow-[2px_2px_0px_#000]">⬅️ KEMBALI</button>
+                <button onclick="GOD.loadData()" class="bg-blue-500 text-white px-4 py-2 rounded-lg border-2 border-black font-black text-xs shadow-[2px_2px_0px_#000] active:translate-y-1 active:shadow-none transition-all">🔄 REFRESH</button>
             </div>
         </div>
     </header>
 
+    <!-- INLINE TABS -->
     <div class="w-full max-w-5xl mx-auto px-4 mt-6">
-        <div class="flex bg-black border-4 border-yellow-400 rounded-xl overflow-hidden shadow-[4px_4px_0px_#FFD700]">
+        <div class="flex bg-[#1e1e1e] border-4 border-yellow-400 rounded-xl overflow-hidden shadow-[4px_4px_0px_#FFD700]">
             <button onclick="GOD.switchTab('hardware')" id="tab-hardware" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all bg-yellow-400 text-black">🔧 Hardware</button>
-            <button onclick="GOD.switchTab('analytics')" id="tab-analytics" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all text-white hover:bg-gray-800 border-x-4 border-yellow-400">📈 Analytics</button>
-            <button onclick="GOD.switchTab('crm')" id="tab-crm" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all text-white hover:bg-gray-800">👥 CRM</button>
+            <button onclick="GOD.switchTab('analytics')" id="tab-analytics" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all text-gray-400 hover:bg-[#333] hover:text-white border-x-4 border-yellow-400">📈 Analytics</button>
+            <button onclick="GOD.switchTab('crm')" id="tab-crm" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all text-gray-400 hover:bg-[#333] hover:text-white">👥 CRM</button>
         </div>
     </div>
 
+    <!-- MAIN CONTENT -->
     <main class="w-full max-w-5xl mx-auto p-4 md:p-6 mt-2 animate-pop">
         
-        <div id="filter-container" class="flex justify-end mb-4 hidden">
-            <select id="month-filter" onchange="GOD.renderData()" class="mario-input w-full md:w-48 p-2 text-sm font-bold cursor-pointer text-black bg-yellow-400 border-black shadow-[2px_2px_0px_#000]"></select>
+        <!-- GLOBAL FILTER (Hanya muncul di Analytics & CRM) -->
+        <div id="filter-container" class="flex justify-end mb-6 hidden">
+            <div class="bg-[#1e1e1e] p-2 rounded-xl border-2 border-gray-600 flex items-center shadow-lg">
+                <span class="text-xs font-bold text-gray-400 mr-3 ml-2 uppercase tracking-widest">Periode:</span>
+                <select id="month-filter" onchange="GOD.renderData()" class="bg-yellow-400 border-2 border-black text-black text-sm font-black rounded-lg p-2 cursor-pointer outline-none shadow-[2px_2px_0px_#000] hover:bg-yellow-300 transition-colors"></select>
+            </div>
         </div>
 
-        <div id="view-hardware" class="mario-card p-5">
-            <h2 class="text-lg font-black border-b-4 border-yellow-400 pb-2 mb-4 text-yellow-400 uppercase">🛠️ UNIT CONTROL</h2>
-            <p class="text-xs text-gray-400 font-bold mb-4">Gunakan menu ini untuk mematikan paksa (Maintenance) unit jika terjadi kerusakan alat.</p>
-            <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        <!-- VIEW: HARDWARE -->
+        <div id="view-hardware" class="mario-card p-6">
+            <h2 class="text-lg font-black border-b-2 border-gray-600 pb-3 mb-5 text-yellow-400 uppercase flex items-center gap-2">
+                <span class="text-2xl">🛠️</span> UNIT CONTROL
+            </h2>
+            <p class="text-xs text-gray-400 font-bold mb-6 bg-[#111] p-3 rounded-lg border border-gray-700">⚠️ Gunakan menu ini HANYA untuk mematikan paksa (Maintenance) unit jika terjadi kerusakan alat atau perbaikan darurat.</p>
+            <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
+        <!-- VIEW: ANALYTICS -->
         <div id="view-analytics" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-black border-2 border-yellow-400 rounded-xl p-4 text-center shadow-[4px_4px_0px_#FFD700]">
+                <div class="bg-[#1e1e1e] border-2 border-yellow-400 rounded-xl p-5 text-center shadow-[4px_4px_0px_#FFD700] hover:-translate-y-1 transition-transform">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Omset Kotor</p>
-                    <p id="kpi-total" class="text-2xl md:text-3xl font-black text-yellow-400 mt-1">Rp 0</p>
+                    <p id="kpi-total" class="text-3xl font-black text-yellow-400 mt-2 font-num">Rp 0</p>
                 </div>
-                <div class="bg-black border-2 border-blue-500 rounded-xl p-4 text-center shadow-[4px_4px_0px_#3b82f6]">
+                <div class="bg-[#1e1e1e] border-2 border-blue-500 rounded-xl p-5 text-center shadow-[4px_4px_0px_#3b82f6] hover:-translate-y-1 transition-transform">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Avg Harian</p>
-                    <p id="kpi-avg" class="text-2xl md:text-3xl font-black text-blue-400 mt-1">Rp 0</p>
+                    <p id="kpi-avg" class="text-3xl font-black text-blue-400 mt-2 font-num">Rp 0</p>
                 </div>
-                <div class="bg-black border-2 border-green-500 rounded-xl p-4 text-center shadow-[4px_4px_0px_#10b981]">
+                <div class="bg-[#1e1e1e] border-2 border-green-500 rounded-xl p-5 text-center shadow-[4px_4px_0px_#10b981] hover:-translate-y-1 transition-transform">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Peak Day</p>
-                    <p id="kpi-best" class="text-2xl md:text-3xl font-black text-green-400 mt-1">Rp 0</p>
-                    <p id="kpi-best-date" class="text-xs font-bold text-green-600 mt-1">-</p>
+                    <p id="kpi-best" class="text-3xl font-black text-green-400 mt-2 font-num">Rp 0</p>
+                    <p id="kpi-best-date" class="text-[10px] font-bold text-green-600 mt-2 bg-green-900/30 py-0.5 px-2 rounded-full inline-block">-</p>
                 </div>
             </div>
             
-            <div class="mario-card p-5">
-                <h2 class="text-lg font-black uppercase text-yellow-400 border-b-4 border-yellow-400 pb-2 mb-4">📈 GRAFIK REVENUE HARIAN</h2>
+            <div class="mario-card p-6">
+                <h2 class="text-lg font-black uppercase text-yellow-400 border-b-2 border-gray-600 pb-3 mb-6 flex items-center gap-2">
+                    <span class="text-2xl">📈</span> GRAFIK REVENUE HARIAN
+                </h2>
                 <div class="h-[400px] w-full"><canvas id="revenueChart"></canvas></div>
             </div>
         </div>
 
+        <!-- VIEW: CRM -->
         <div id="view-crm" class="hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="mario-card p-5">
-                   <h2 class="text-sm md:text-base font-black border-b-2 border-blue-500 pb-2 mb-4 text-blue-400 uppercase flex justify-between items-start">
-    <span>🎉 CUSTOMER BARU</span>
-    <div class="flex flex-col items-end gap-1">
-        <span id="count-new" class="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">0</span>
-        <span id="total-new-rp" class="text-xs font-black text-yellow-400">Rp 0</span>
-    </div>
-</h2>
-                    <div class="max-h-[400px] overflow-y-auto custom-scroll pr-2">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- CUSTOMER BARU -->
+                <div class="mario-card p-0 overflow-hidden flex flex-col h-[500px]">
+                    <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
+                        <div>
+                            <h2 class="text-base font-black text-blue-400 uppercase tracking-wide flex items-center gap-2"><span class="text-xl">🎉</span> CUSTOMER BARU</h2>
+                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Akuisisi pertama kali bulan ini</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 text-right">
+                            <span id="count-new" class="bg-blue-600 text-white font-bold px-2 py-0.5 rounded shadow-sm text-[10px] tracking-wider border border-blue-400">0 Orang</span>
+                            <span id="total-new-rp" class="text-sm font-black text-yellow-400 font-num">Rp 0</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scroll relative">
                         <table class="w-full text-left border-collapse text-xs text-gray-300">
-                            <thead><tr class="border-b-2 border-gray-700 text-gray-400 font-bold uppercase text-[10px]"><th class="pb-2">Nama</th><th class="pb-2">Daerah</th><th class="pb-2 text-right">Nilai (Rp)</th></tr></thead>
+                            <thead class="sticky top-0 bg-[#262626] z-10 shadow-md">
+                                <tr class="border-b border-gray-600 text-gray-400 font-bold uppercase text-[9px] tracking-widest">
+                                    <th class="p-3 pl-5">Nama / Kontak</th>
+                                    <th class="p-3">Cabang</th>
+                                    <th class="p-3 pr-5 text-right">Total Nilai</th>
+                                </tr>
+                            </thead>
                             <tbody id="body-new-customers"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="mario-card p-5">
-                   <h2 class="text-sm md:text-base font-black border-b-2 border-green-500 pb-2 mb-4 text-green-400 uppercase flex justify-between items-center">
-    <span>🔥 PELANGGAN SETIA</span>
-    <span id="count-returning" class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">0</span>
-</h2>
-                    <div class="max-h-[400px] overflow-y-auto custom-scroll pr-2">
+
+                <!-- PELANGGAN SETIA -->
+                <div class="mario-card p-0 overflow-hidden flex flex-col h-[500px]">
+                    <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
+                        <div>
+                            <h2 class="text-base font-black text-green-400 uppercase tracking-wide flex items-center gap-2"><span class="text-xl">🔥</span> PELANGGAN SETIA</h2>
+                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Repeat order (Join bulan sebelumnya)</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 text-right">
+                            <span id="count-returning" class="bg-green-600 text-white font-bold px-2 py-0.5 rounded shadow-sm text-[10px] tracking-wider border border-green-400">0 Orang</span>
+                            <span id="total-returning-rp" class="text-sm font-black text-yellow-400 font-num">Rp 0</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scroll relative">
                         <table class="w-full text-left border-collapse text-xs text-gray-300">
-                            <thead><tr class="border-b-2 border-gray-700 text-gray-400 font-bold uppercase text-[10px]"><th class="pb-2">Nama</th><th class="pb-2 text-center">Freq</th><th class="pb-2 text-right">Nilai (Rp)</th></tr></thead>
+                            <thead class="sticky top-0 bg-[#262626] z-10 shadow-md">
+                                <tr class="border-b border-gray-600 text-gray-400 font-bold uppercase text-[9px] tracking-widest">
+                                    <th class="p-3 pl-5">Nama / Kontak</th>
+                                    <th class="p-3 text-center">Freq</th>
+                                    <th class="p-3 pr-5 text-right">Total Nilai</th>
+                                </tr>
+                            </thead>
                             <tbody id="body-returning-customers"></tbody>
                         </table>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -168,24 +220,20 @@
             switchTab: (tab) => {
                 STATE.activeTab = tab;
                 
-                // Update Buttons
                 ['hardware', 'analytics', 'crm'].forEach(t => {
                     let btn = document.getElementById(`tab-${t}`);
                     if (t === tab) {
                         btn.classList.add('bg-yellow-400', 'text-black');
-                        btn.classList.remove('bg-transparent', 'text-white', 'hover:bg-gray-800');
+                        btn.classList.remove('bg-transparent', 'text-gray-400', 'hover:bg-[#333]', 'hover:text-white');
                     } else {
                         btn.classList.remove('bg-yellow-400', 'text-black');
-                        btn.classList.add('bg-transparent', 'text-white', 'hover:bg-gray-800');
+                        btn.classList.add('bg-transparent', 'text-gray-400', 'hover:bg-[#333]', 'hover:text-white');
                     }
                 });
 
-                // Update Views
                 document.getElementById('view-hardware').classList.toggle('hidden', tab !== 'hardware');
                 document.getElementById('view-analytics').classList.toggle('hidden', tab !== 'analytics');
                 document.getElementById('view-crm').classList.toggle('hidden', tab !== 'crm');
-
-                // Filter bulan hanya relevan untuk Analytics dan CRM
                 document.getElementById('filter-container').classList.toggle('hidden', tab === 'hardware');
 
                 GOD.renderData();
@@ -267,13 +315,18 @@
                     const isM = s === 'maintenance'; 
                     const isB = ['playing','main','booked','pending'].includes(s);
                     
+                    let statusColor = 'text-green-400';
+                    let statusDot = '🟢';
+                    if (isM) { statusColor = 'text-red-500'; statusDot = '🔴'; }
+                    else if (isB) { statusColor = 'text-orange-400'; statusDot = '🟠'; }
+
                     mHtml += `
-                        <div class="flex items-center justify-between bg-black p-4 rounded-xl border-2 border-gray-600 shadow-[2px_2px_0px_#000]">
+                        <div class="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-700 hover:border-gray-500 transition-colors">
                             <div>
-                                <p class="font-black text-base uppercase text-white">U${u.id} <span class="bg-gray-700 text-white text-[10px] ml-2 px-2 py-0.5 rounded">${u.label}</span></p>
-                                <p class="text-[11px] font-bold mt-1 ${isM?'text-red-500':isB?'text-orange-400':'text-green-400'}">STATUS: ${s.toUpperCase()}</p>
+                                <p class="font-black text-sm uppercase text-gray-200">U${u.id} <span class="bg-gray-800 text-gray-400 border border-gray-600 text-[9px] ml-2 px-2 py-0.5 rounded font-bold">${u.label}</span></p>
+                                <p class="text-[10px] font-bold mt-1.5 ${statusColor} tracking-widest">${statusDot} ${s.toUpperCase()}</p>
                             </div>
-                            <button onclick="GOD.toggleMaintenance(${u.id}, '${u.label}', ${!isM})" ${isB?'disabled':''} class="mario-btn p-3 text-[10px] font-black w-28 ${isM?'bg-green-400 text-black':'bg-red-600 text-white border-red-800'}">
+                            <button onclick="GOD.toggleMaintenance(${u.id}, '${u.label}', ${!isM})" ${isB?'disabled':''} class="mario-btn p-3 text-[10px] font-black w-28 shadow-sm ${isM?'bg-green-400 text-black border-green-600':'bg-red-600 text-white border-red-800'}">
                                 ${isM?'NORMALKAN':'SET MAINT'}
                             </button>
                         </div>`;
@@ -343,7 +396,7 @@
                 
                 if (typeof Chart !== 'undefined') {
                     const ctx = document.getElementById('revenueChart').getContext('2d');
-                    Chart.defaults.color = '#a3a3a3'; Chart.defaults.font.family = "'Inter', sans-serif";
+                    Chart.defaults.color = '#888'; Chart.defaults.font.family = "'Inter', sans-serif";
                     STATE.chartInstance = new Chart(ctx, {
                         type: 'bar',
                         data: {
@@ -357,11 +410,11 @@
                         },
                         options: { 
                             responsive:true, maintainAspectRatio:false, interaction: { mode: 'index', intersect: false }, 
-                            scales: { x: { stacked: true, grid: { color: '#333' } }, y: { stacked: true, grid: { color: '#333' }, ticks: { callback: function(v) { return 'Rp ' + (v/1000) + 'k'; } } } },
+                            scales: { x: { stacked: true, grid: { color: '#333' } }, y: { stacked: true, grid: { color: '#333', drawBorder: false }, ticks: { callback: function(v) { return 'Rp ' + (v/1000) + 'k'; } } } },
                             plugins: {
-                                legend: { labels: { color: 'white', font: { weight: 'bold' } } },
+                                legend: { labels: { color: 'white', font: { weight: 'bold' }, usePointStyle: true, boxWidth: 8 } },
                                 tooltip: {
-                                    backgroundColor: 'rgba(0,0,0,0.9)', titleColor: '#FFD700', bodyColor: 'white', borderColor: '#FFD700', borderWidth: 1, padding: 10,
+                                    backgroundColor: 'rgba(20,20,20,0.95)', titleColor: '#FFD700', bodyColor: 'white', borderColor: '#444', borderWidth: 1, padding: 12, cornerRadius: 8,
                                     callbacks: {
                                         afterBody: function(ctx) {
                                             if (ctx[0].dataset.type === 'line') return;
@@ -377,7 +430,7 @@
             },
 
             // ======================================
-            // TAB 3: CRM (LOGIKA CUSTOMER DIPERBAIKI)
+            // TAB 3: CRM 
             // ======================================
             renderCRM: () => {
                 const month = document.getElementById('month-filter').value;
@@ -385,7 +438,7 @@
                 
                 let customerHistory = {}; 
 
-                // Tahap 1: Rekam histori SEMUA transaksi (tanpa mempedulikan bulan filter dulu)
+                // 1. Rekam histori SEMUA transaksi
                 STATE.logs.forEach(l => {
                     const s = String(l.status_unit_arena || '').toLowerCase(); 
                     if(['batal','pending','maintenance'].includes(s)) return;
@@ -403,23 +456,12 @@
                     let branch = (rawBranch.toLowerCase().includes('banda')) ? 'Banda' : (rawBranch.toLowerCase().includes('sabang') ? 'Sabang' : 'Aceh Timur');
                     let name = l.nama_pelanggan_arena || 'Sultan';
 
-                    // Inisialisasi Jika belum ada
                     if (!customerHistory[phone]) {
-                        customerHistory[phone] = { 
-                            firstAppearance: mStr, 
-                            name: name, 
-                            branch: branch, 
-                            spentSelectedMonth: 0, 
-                            trxCountSelectedMonth: 0 
-                        };
+                        customerHistory[phone] = { firstAppearance: mStr, name: name, branch: branch, spentSelectedMonth: 0, trxCountSelectedMonth: 0 };
                     } else {
-                        // Cek apakah tanggal kemunculan ini lebih lama dari yang terekam sebelumnya
-                        if (mStr < customerHistory[phone].firstAppearance) {
-                            customerHistory[phone].firstAppearance = mStr;
-                        }
+                        if (mStr < customerHistory[phone].firstAppearance) customerHistory[phone].firstAppearance = mStr;
                     }
 
-                    // Tahap 2: Tambahkan data SPESIFIK untuk bulan yang sedang difilter
                     if (mStr === month) {
                         customerHistory[phone].spentSelectedMonth += tagihan;
                         customerHistory[phone].trxCountSelectedMonth += 1;
@@ -428,62 +470,64 @@
                     }
                 });
 
-                // Tahap 3: Pisahkan New vs Returning
+                // 2. Pisahkan New vs Returning
                 let newCustList = []; let retCustList = [];
                 Object.keys(customerHistory).forEach(phone => {
                     const c = customerHistory[phone];
-                    
-                    // Pastikan dia punya transaksi di bulan yang kita filter
                     if (c.trxCountSelectedMonth > 0) {
-                        if (c.firstAppearance === month) {
-                            // First Appearance SAMA dengan bulan yang difilter = Baru Pertama Kali Main
-                            newCustList.push(c);
-                        } else if (c.firstAppearance < month) {
-                            // First Appearance LEBIH LAMA dari bulan yang difilter = Pernah main sebelumnya
-                            retCustList.push(c);
-                        }
+                        if (c.firstAppearance === month) newCustList.push(c);
+                        else if (c.firstAppearance < month) retCustList.push(c);
                     }
                 });
 
                 newCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
                 retCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
 
-// Hitung total Rupiah
-let totalNewRp = newCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
-let totalRetRp = retCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
+                // 3. Kalkulasi Total Rp
+                let totalNewRp = newCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
+                let totalRetRp = retCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
 
-// Update UI Count
-document.getElementById('count-new').innerText = newCustList.length + ' Orang';
-document.getElementById('count-returning').innerText = retCustList.length + ' Orang';
+                // Update UI Counters
+                document.getElementById('count-new').innerText = newCustList.length + ' Orang';
+                document.getElementById('count-returning').innerText = retCustList.length + ' Orang';
+                document.getElementById('total-new-rp').innerText = GOD.formatRp(totalNewRp);
+                document.getElementById('total-returning-rp').innerText = GOD.formatRp(totalRetRp);
 
-// Update UI Total Rp
-document.getElementById('total-new-rp').innerText = GOD.formatRp(totalNewRp);
-document.getElementById('total-returning-rp').innerText = GOD.formatRp(totalRetRp);
+                // Setup Colors for Badges
+                const badgeColor = {
+                    'Banda': 'bg-blue-900/30 text-blue-400 border-blue-800',
+                    'Sabang': 'bg-purple-900/30 text-purple-400 border-purple-800',
+                    'Aceh Timur': 'bg-emerald-900/30 text-emerald-400 border-emerald-800'
+                };
 
+                // Render New Customers
                 let htmlNew = '';
                 newCustList.forEach(c => {
+                    let bColor = badgeColor[c.branch] || badgeColor['Banda'];
                     htmlNew += `
-                    <tr class="border-b border-gray-700 hover:bg-neutral-800 transition-colors">
-                        <td class="py-3 pr-2 font-bold">${c.name}</td>
-                        <td class="py-3 pr-2"><span class="text-[9px] bg-blue-900/40 text-blue-300 px-1.5 py-0.5 rounded border border-blue-800 font-bold uppercase">${c.branch}</span></td>
-                        <td class="py-3 text-right font-mono text-yellow-400 font-bold">${c.spentSelectedMonth.toLocaleString('id-ID')}</td>
+                    <tr class="border-b border-gray-800 hover:bg-[#2a2a2a] transition-colors">
+                        <td class="p-3 pl-5 font-bold text-gray-200">${c.name}</td>
+                        <td class="p-3"><span class="text-[9px] ${bColor} px-2 py-1 rounded border font-bold uppercase">${c.branch}</span></td>
+                        <td class="p-3 pr-5 text-right font-num font-black text-yellow-400">${c.spentSelectedMonth.toLocaleString('id-ID')}</td>
                     </tr>`;
                 });
-                document.getElementById('body-new-customers').innerHTML = htmlNew || '<tr><td colspan="3" class="text-center py-6 text-gray-500">Belum ada akuisisi customer baru bulan ini.</td></tr>';
+                document.getElementById('body-new-customers').innerHTML = htmlNew || '<tr><td colspan="3" class="text-center py-8 text-gray-500 font-bold border-b border-gray-800">Belum ada akuisisi customer baru bulan ini.</td></tr>';
 
+                // Render Returning Customers
                 let htmlRet = '';
                 retCustList.forEach(c => {
+                    let bColor = badgeColor[c.branch] || badgeColor['Banda'];
                     htmlRet += `
-                    <tr class="border-b border-gray-700 hover:bg-neutral-800 transition-colors">
-                        <td class="py-3 pr-2">
+                    <tr class="border-b border-gray-800 hover:bg-[#2a2a2a] transition-colors">
+                        <td class="p-3 pl-5">
                             <p class="font-bold text-gray-200">${c.name}</p>
-                            <span class="text-[8px] text-gray-500 uppercase tracking-widest block mt-0.5">Cabang: ${c.branch}</span>
+                            <span class="text-[8px] ${bColor} px-1.5 py-0.5 rounded border uppercase tracking-widest inline-block mt-1">${c.branch}</span>
                         </td>
-                        <td class="py-3 text-center"><span class="bg-green-500 text-black px-2 py-0.5 text-[10px] font-black rounded">${c.trxCountSelectedMonth}x</span></td>
-                        <td class="py-3 text-right font-mono text-yellow-400 font-bold">${c.spentSelectedMonth.toLocaleString('id-ID')}</td>
+                        <td class="p-3 text-center"><span class="bg-gray-700 text-white px-2.5 py-1 text-[10px] font-black rounded-md shadow-sm border border-gray-600">${c.trxCountSelectedMonth}x</span></td>
+                        <td class="p-3 pr-5 text-right font-num font-black text-yellow-400">${c.spentSelectedMonth.toLocaleString('id-ID')}</td>
                     </tr>`;
                 });
-                document.getElementById('body-returning-customers').innerHTML = htmlRet || '<tr><td colspan="3" class="text-center py-6 text-gray-500">Gak ada repeat order bulan ini.</td></tr>';
+                document.getElementById('body-returning-customers').innerHTML = htmlRet || '<tr><td colspan="3" class="text-center py-8 text-gray-500 font-bold border-b border-gray-800">Tidak ada repeat order bulan ini.</td></tr>';
             }
         };
 
