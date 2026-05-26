@@ -246,7 +246,11 @@
                     totalAll++;
                     
                     const status = String(l.status_unit_arena).toLowerCase();
-                    const admin = String(l.admin_creator || l.Users || l.admin_name || 'Sistem').toUpperCase();
+                    let creatorRaw = String(l.admin_creator || l.Users || l.admin_name || '').toLowerCase();
+                    if (creatorRaw === 'self-booking' || creatorRaw === 'auto (web)' || creatorRaw === '') {
+                        creatorRaw = String(l.Users || 'Sistem').toLowerCase();
+                    }
+                    const admin = creatorRaw.toUpperCase();
                     const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
                     const revenue = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
 
