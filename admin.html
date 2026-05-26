@@ -177,7 +177,11 @@
                     const logDate = safeDate.substring(0, 10);
                     
                     // Prioritas membaca admin_creator (supaya tidak tertimpa saat status diganti orang lain)
-                    const creator = String(l.admin_creator || l.Users || '').toLowerCase();
+                    let creator = String(l.admin_creator || '').toLowerCase();
+                    // Jika ini hasil booking otomatis, berikan poin KPI ke admin yang mengurus (Users)
+                    if (creator === 'self-booking' || creator === 'auto (web)' || creator === '') {
+                        creator = String(l.Users || '').toLowerCase();
+                    }
                     
                     return creator === myUsername && logDate === todayStr && ['playing', 'main', 'finished', 'selesai'].includes(stat);
                 });
