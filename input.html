@@ -25,9 +25,13 @@
         .hidden { display: none !important; }
         .animate-pop { animation: popIn 0.3s forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-24 md:pb-10">
 
     <script>
         const session = JSON.parse(localStorage.getItem('arena_session_v6'));
@@ -39,14 +43,14 @@
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
+        <h2 id="loader-text" class="text-xl font-black text-white tracking-widest uppercase">MEMUAT SISTEM...</h2>
     </div>
 
     <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
             <button onclick="APP.goBack()" class="mario-btn bg-white text-black px-4 py-2 text-xs md:text-sm font-black shadow-[2px_2px_0px_#FFD700]">◀ KEMBALI</button>
             <div class="text-right">
-                <h1 class="text-lg md:text-xl font-black text-white leading-none">INPUT SISTEM</h1>
+                <h1 class="text-lg md:text-xl font-black text-white leading-none">INPUT TRANSAKSI</h1>
                 <p id="user-info-text" class="text-[9px] md:text-xs font-bold text-yellow-400 uppercase tracking-widest mt-1">SINKRONISASI...</p>
             </div>
         </div>
@@ -55,6 +59,23 @@
     <main id="app" class="w-full max-w-4xl mx-auto p-4 md:p-6 mt-2 animate-pop">
         <div id="main-content" class="w-full mx-auto"></div>
     </main>
+
+    <div class="bottom-nav-container md:hidden" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex justify-around items-center w-full" style="padding: 10px 0;">
+            <div onclick="APP.goBack()" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">🏠</span>HOME
+            </div>
+            <div onclick="window.location.href='logs.html'" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black; flex: 1;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+        </nav>
+    </div>
 
     <script>
         const CONFIG = {
@@ -102,11 +123,10 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI UNIT...');
-                // Fetch dashboard agar form input tahu mana unit yang kosong/terisi
-                let fetchRole = STATE.user.role;
-                let fetchBranch = fetchRole === 'manager' ? 'ALL' : STATE.user.branch;
-
-                const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
+                
+                // PERBAIKAN: Agar admin bisa input cabang mana saja, kita paksa fetch 'ALL' branches
+                // Ini memastikan APP.getUnitStatusRaw punya data unit yang lengkap dari semua daerah.
+                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
                 APP.hideLoader();
                 
                 let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; return d; }) : [];
@@ -128,16 +148,9 @@
                 const minDate = now.toISOString().slice(0,16);
                 const maxD = new Date(now); maxD.setDate(maxD.getDate() + 7); 
                 const maxDate = maxD.toISOString().slice(0,16);
-                const b = STATE.user.branch || ''; 
                 
-                // Cek Role: Jika admin, kunci cabang ke cabangnya sendiri
-                const selectCabangHtml = STATE.user.role === 'admin' 
-                    ? `<select id="r-branch" class="mario-input border-orange-400 bg-gray-200 cursor-not-allowed" disabled><option value="${b}">${b === 'Banda' ? 'Banda Aceh' : b}</option></select>` 
-                    : `<select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input border-orange-400">
-                           <option value="Banda" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
-                           <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
-                           <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
-                       </select>`;
+                // Ambil cabang user untuk default selected, tapi dropdown DIBUKA PENUH
+                const b = STATE.user.branch || ''; 
 
                 return `
                 <div class="mario-card p-5 md:p-8 w-full shadow-[8px_8px_0px_#000]">
@@ -156,8 +169,12 @@
                             <h3 class="font-bold text-xs uppercase text-orange-600 mb-3 tracking-widest border-b border-orange-200 pb-2">Detail Sewa</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label class="text-xs font-bold uppercase mb-1 block">Cabang</label>
-                                    ${selectCabangHtml}
+                                    <label class="text-xs font-bold uppercase mb-1 block">Pilih Cabang</label>
+                                    <select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input border-orange-400">
+                                        <option value="Banda" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
+                                        <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
+                                        <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
+                                    </select>
                                 </div>
                                 <div><label class="text-xs font-bold uppercase mb-1 block">Pilih Unit (Hanya Kosong)</label><select id="r-unit" class="mario-input border-orange-400" required></select></div>
                             </div>
