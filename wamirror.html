@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARENA - Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,9 +22,11 @@
         .chat-bg { background-color: #ffe8d6; background-image: radial-gradient(#FF6B00 1px, transparent 1px); background-size: 20px 20px; opacity: 0.9; }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: black; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 10px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* Chat Bubbles */
         .bubble { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; position: relative; }
@@ -37,13 +39,14 @@
         
         /* Filter Active State */
         .filter-active { background-color: var(--mario-orange) !important; color: white !important; border-color: black !important; }
+        .card-active { border-color: #FF6B00 !important; background-color: #fff7ed !important; }
     </style>
 </head>
-<body class="h-screen overflow-hidden flex bg-gray-200 p-2 md:p-4 gap-4">
+<body class="h-[100dvh] w-full overflow-hidden flex bg-gray-200 p-2 md:p-4 gap-4">
 
-    <div id="sidebar" class="w-full md:w-[400px] flex flex-col bg-white mario-border mario-shadow rounded-2xl h-full z-10 relative overflow-hidden">
+    <div id="sidebar" class="w-full md:w-[420px] flex flex-col bg-white mario-border mario-shadow rounded-2xl h-full z-10 relative overflow-hidden min-h-0">
         
-<div class="bg-black text-white p-4 flex justify-between items-center">
+        <div class="bg-black text-white p-4 flex justify-between items-center shrink-0">
             <div>
                 <h1 class="font-black text-xl tracking-wider text-[#FFD700]">ARENA MIRROR</h1>
                 <p id="connection-status" class="text-xs text-green-400 font-bold flex items-center gap-1">
@@ -51,52 +54,62 @@
                 </p>
             </div>
             <div class="flex gap-2">
-                <button onclick="window.location.href='manager.html'" class="p-2 bg-[#FFD700] text-black rounded-lg hover:bg-yellow-300 text-xs font-black mario-border transition-transform active:translate-y-1">🏠 DASHBOARD</button>
-                <button onclick="fetchData()" class="p-2 bg-white text-black rounded-lg hover:bg-gray-200 text-xs font-black mario-border transition-transform active:translate-y-1">🔄 REFRESH</button>
+                <button onclick="window.history.back()" class="p-2 bg-[#FFD700] text-black rounded-lg hover:bg-yellow-300 text-xs font-black mario-border transition-transform active:translate-y-1">🏠</button>
+                <button onclick="fetchAllData()" class="p-2 bg-white text-black rounded-lg hover:bg-gray-200 text-xs font-black mario-border transition-transform active:translate-y-1">🔄</button>
             </div>
         </div>
 
-        <div class="bg-gray-100 p-3 border-b-3 border-black grid grid-cols-3 gap-2 text-center mario-border border-x-0 border-t-0">
-            <div onclick="setFilter('ALL')" class="bg-white mario-border rounded-xl p-2 cursor-pointer hover:bg-gray-50 transition-transform active:translate-y-1" id="btn-filter-all">
-                <p class="text-[10px] text-gray-500 font-black uppercase">Semua</p>
+        <div class="bg-gray-100 p-3 border-b-3 border-black flex overflow-x-auto gap-2 hide-scrollbar mario-border border-x-0 border-t-0 shrink-0">
+            <div onclick="setFilter('ALL')" class="bg-white mario-border rounded-xl p-2 cursor-pointer hover:bg-gray-50 flex-shrink-0 min-w-[70px] text-center" id="card-ALL">
+                <p class="text-[9px] text-gray-500 font-black uppercase">Semua</p>
                 <p id="sla-total" class="text-lg font-black text-black">0</p>
             </div>
-            <div onclick="setFilter('WAITING')" class="bg-[#FFD700] mario-border rounded-xl p-2 cursor-pointer hover:bg-yellow-300 transition-transform active:translate-y-1" id="btn-filter-waiting">
-                <p class="text-[10px] text-black font-black uppercase">Menunggu</p>
+            <div onclick="setFilter('WAITING')" class="bg-[#FFD700] mario-border rounded-xl p-2 cursor-pointer hover:bg-yellow-300 flex-shrink-0 min-w-[80px] text-center" id="card-WAITING">
+                <p class="text-[9px] text-black font-black uppercase">Menunggu</p>
                 <p id="sla-waiting" class="text-lg font-black text-black">0</p>
             </div>
-            <div onclick="setFilter('BREACH')" class="bg-[#FF6B00] mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-500 transition-transform active:translate-y-1" id="btn-filter-breach">
-                <p class="text-[10px] text-white font-black uppercase">> 8 Menit</p>
+            <div onclick="setFilter('BREACH')" class="bg-[#FF6B00] mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-500 flex-shrink-0 min-w-[75px] text-center" id="card-BREACH">
+                <p class="text-[9px] text-white font-black uppercase">> 8 Menit</p>
                 <p id="sla-breach" class="text-lg font-black text-white">0</p>
+            </div>
+            <div onclick="setFilter('PLAYING')" class="bg-red-500 mario-border rounded-xl p-2 cursor-pointer hover:bg-red-400 flex-shrink-0 min-w-[75px] text-center" id="card-PLAYING">
+                <p class="text-[9px] text-white font-black uppercase">Playing</p>
+                <p id="sla-playing" class="text-lg font-black text-white">0</p>
+            </div>
+            <div onclick="setFilter('BOOKED')" class="bg-orange-400 mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-300 flex-shrink-0 min-w-[75px] text-center" id="card-BOOKED">
+                <p class="text-[9px] text-white font-black uppercase">Booked</p>
+                <p id="sla-booked" class="text-lg font-black text-white">0</p>
             </div>
         </div>
 
-        <div class="flex text-sm font-black bg-white mario-border border-x-0 border-t-0">
-            <div onclick="setFilter('ALL')" id="tab-all" class="flex-1 text-center py-3 cursor-pointer filter-active border-r-3 border-black">Semua Chat</div>
-            <div onclick="setFilter('UNREAD')" id="tab-unread" class="flex-1 text-center py-3 cursor-pointer hover:bg-gray-100 text-gray-400">Perlu Dibalas</div>
+        <div class="flex text-sm font-black bg-white mario-border border-x-0 border-t-0 shrink-0">
+            <div onclick="setFilter('ALL')" id="tab-all" class="flex-1 text-center py-2.5 cursor-pointer filter-active border-r-3 border-black">Semua Chat</div>
+            <div onclick="setFilter('UNREAD')" id="tab-unread" class="flex-1 text-center py-2.5 cursor-pointer hover:bg-gray-100 text-gray-400">Perlu Dibalas</div>
         </div>
 
-        <div id="chat-list" class="flex-1 overflow-y-auto bg-white p-2 space-y-2">
+        <div id="chat-list" class="flex-1 overflow-y-auto bg-white p-2 space-y-2 overscroll-contain min-h-0">
             <div class="flex justify-center items-center h-full text-gray-400 font-black animate-pulse">
                 Menarik data...
             </div>
         </div>
     </div>
 
-    <div id="chat-window" class="flex-1 hidden md:flex flex-col bg-white mario-border mario-shadow rounded-2xl relative h-full overflow-hidden">
+    <div id="chat-window" class="flex-1 hidden md:flex flex-col bg-white mario-border mario-shadow rounded-2xl relative h-full overflow-hidden min-h-0 w-full absolute md:static top-0 left-0 z-20">
         
-        <div class="bg-black text-white p-3 md:p-4 flex items-center border-b-3 border-black z-10 h-[75px]">
+        <div class="bg-black text-white p-3 md:p-4 flex items-center border-b-3 border-black z-10 h-[75px] shrink-0">
             <button onclick="backToList()" class="md:hidden mr-4 p-2 bg-white text-black rounded-lg mario-border font-black text-xs active:translate-y-1">
-                KEMBALI
+                ◀ KEMBALI
             </button>
             <div class="w-10 h-10 rounded-full bg-[#FFD700] mario-border flex items-center justify-center text-xl mr-3 font-black text-black" id="avatar-placeholder">?</div>
             <div class="flex-1">
-                <h2 class="font-black text-[#FFD700] text-lg leading-tight uppercase tracking-wide" id="chat-name">Pilih Chat</h2>
+                <h2 class="font-black text-[#FFD700] text-lg leading-tight uppercase tracking-wide flex items-center gap-2" id="chat-name">
+                    Pilih Chat
+                </h2>
                 <p class="text-xs text-gray-300 font-semibold" id="chat-number">Pilih dari sidebar</p>
             </div>
         </div>
 
-        <div id="message-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 chat-bg">
+        <div id="message-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 chat-bg overscroll-contain min-h-0">
             <div class="h-full flex items-center justify-center">
                 <div class="bg-white mario-border mario-shadow-sm px-4 py-2 rounded-xl text-sm font-black text-black">
                     Let's A Go! Monitor Arena.
@@ -106,24 +119,52 @@
     </div>
 
     <script>
-        const WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/get-chat-logs";
+        const WA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/get-chat-logs";
+        const ARENA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1";
+        
         let allLogs = []; 
+        let activeArenaData = {}; // Format: { "628xxx": "booked", "628yyy": "playing" }
         let groupedGroupsArray = []; 
         let currentActiveWa = null;
-        let currentFilter = 'ALL'; // ALL, WAITING, BREACH, UNREAD
+        let currentFilter = 'ALL'; // ALL, WAITING, BREACH, UNREAD, BOOKED, PLAYING
 
-        async function fetchData() {
+        // Fetch Both WA Logs and Arena Active Logs
+        async function fetchAllData() {
             try {
-                const res = await fetch(WEBHOOK, { mode: 'cors' });
-                if (!res.ok) throw new Error("HTTP Error " + res.status);
-                
-                const data = await res.json();
-                allLogs = data;
-                processGroups(data);
-                
-                const statusEl = document.getElementById('connection-status');
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Terhubung (${new Date().toLocaleTimeString('id-ID').substring(0,5)})`;
-                statusEl.className = "text-xs text-green-400 font-bold flex items-center gap-1";
+                const [waRes, arenaRes] = await Promise.all([
+                    fetch(WA_WEBHOOK, { mode: 'cors' }),
+                    fetch(ARENA_WEBHOOK, {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'get_dashboard', role: 'admin', branch: 'ALL'})
+                    })
+                ]);
+
+                if (arenaRes.ok) {
+                    const aData = await arenaRes.json();
+                    activeArenaData = {};
+                    aData.forEach(item => {
+                        let d = item.json || item;
+                        let stat = String(d.status_unit_arena).toLowerCase();
+                        if (stat === 'booked' || stat === 'playing' || stat === 'main' || stat === 'book') {
+                            // Standarisasi status name & WA number
+                            let normStat = (stat === 'main') ? 'playing' : (stat === 'book' ? 'booked' : stat);
+                            let waRaw = String(d.nomor_pelanggan_arena || '').replace(/\D/g, '').replace(/^0/, '62');
+                            if(waRaw) activeArenaData[waRaw] = normStat;
+                        }
+                    });
+                }
+
+                if (waRes.ok) {
+                    const data = await waRes.json();
+                    allLogs = data;
+                    processGroups(data);
+                    
+                    const statusEl = document.getElementById('connection-status');
+                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Terhubung (${new Date().toLocaleTimeString('id-ID').substring(0,5)})`;
+                    statusEl.className = "text-xs text-green-400 font-bold flex items-center gap-1";
+                } else {
+                    throw new Error("HTTP Error");
+                }
             } catch (e) { 
                 const statusEl = document.getElementById('connection-status');
                 statusEl.innerHTML = `⚠️ Terputus`;
@@ -145,12 +186,15 @@
                 tempGroups[l.nomor_wa].messages.push(l);
             });
 
-            // 2. Kalkulasi Properti Sorting & Filter
+            // 2. Kalkulasi Properti Sorting & Filter & Arena Status
             groupedGroupsArray = Object.values(tempGroups).map(group => {
                 const lastMsg = group.messages[0]; // Karena data dr n8n dibalik
                 const lastMsgDate = new Date(lastMsg.waktu.replace(' ', 'T'));
                 const diffMins = (new Date() - lastMsgDate) / 60000;
                 
+                // Cek status WA ini di database Arena (apakah sedang Booked / Playing)
+                group.arenaStatus = activeArenaData[group.wa] || null;
+
                 group.isWaiting = lastMsg.tipe === 'Masuk';
                 group.isBreach = group.isWaiting && diffMins > 8;
                 group.diffMins = diffMins;
@@ -166,29 +210,38 @@
         function setFilter(filterType) {
             currentFilter = filterType;
             
-            // UI Toggle Tabs
-            document.getElementById('tab-all').classList.remove('filter-active', 'text-gray-400');
-            document.getElementById('tab-unread').classList.remove('filter-active', 'text-gray-400');
-            
+            // Atur UI Tabs bawah
             if (filterType === 'UNREAD') {
                 document.getElementById('tab-unread').classList.add('filter-active');
                 document.getElementById('tab-all').classList.add('text-gray-400');
+                document.getElementById('tab-all').classList.remove('filter-active');
             } else {
                 document.getElementById('tab-all').classList.add('filter-active');
+                document.getElementById('tab-unread').classList.remove('filter-active');
                 document.getElementById('tab-unread').classList.add('text-gray-400');
             }
+
+            // Atur visual style untuk top cards
+            ['ALL', 'WAITING', 'BREACH', 'PLAYING', 'BOOKED'].forEach(id => {
+                const card = document.getElementById(`card-${id}`);
+                if (card) {
+                    if (filterType === id) { card.classList.add('border-black', 'border-4', 'opacity-100'); card.classList.remove('opacity-60'); }
+                    else { card.classList.remove('border-black', 'border-4', 'opacity-100'); card.classList.add('opacity-60'); }
+                }
+            });
 
             renderSidebar();
         }
 
         function renderSidebar() {
-            let slaWaiting = 0;
-            let slaBreach = 0;
+            let slaWaiting = 0, slaBreach = 0, countPlaying = 0, countBooked = 0;
 
-            // Hitung SLA Global
+            // Hitung SLA Global & Status Arena
             groupedGroupsArray.forEach(g => {
                 if (g.isWaiting) slaWaiting++;
                 if (g.isBreach) slaBreach++;
+                if (g.arenaStatus === 'playing') countPlaying++;
+                if (g.arenaStatus === 'booked') countBooked++;
             });
 
             // Terapkan Filter
@@ -196,10 +249,12 @@
                 if (currentFilter === 'WAITING') return g.isWaiting;
                 if (currentFilter === 'BREACH') return g.isBreach;
                 if (currentFilter === 'UNREAD') return g.isWaiting;
+                if (currentFilter === 'PLAYING') return g.arenaStatus === 'playing';
+                if (currentFilter === 'BOOKED') return g.arenaStatus === 'booked';
                 return true; // ALL
             });
 
-            // SORTING BARU: Belum dibalas (isWaiting) DI ATAS, lalu berdasarkan waktu terbaru
+            // SORTING: Belum dibalas (isWaiting) DI ATAS, lalu berdasarkan waktu terbaru
             filteredArray.sort((a, b) => {
                 if (a.isWaiting && !b.isWaiting) return -1;
                 if (!a.isWaiting && b.isWaiting) return 1;
@@ -210,13 +265,14 @@
             listContainer.innerHTML = '';
             
             if (filteredArray.length === 0) {
-                listContainer.innerHTML = `<div class="text-center p-6 font-black text-gray-400 mt-10">TIDAK ADA CHAT</div>`;
+                listContainer.innerHTML = `<div class="text-center p-6 font-black text-gray-400 mt-10">TIDAK ADA CHAT SESUAI FILTER</div>`;
             }
 
             filteredArray.forEach(group => {
                 // Styling Card Mario
                 let cardClass = "p-3 rounded-xl mario-border cursor-pointer transition-transform active:translate-y-1 mb-2 ";
                 let badgeHtml = "";
+                let arenaBadgeHtml = "";
 
                 if (group.isBreach) {
                     cardClass += "sla-breach mario-shadow-sm";
@@ -229,6 +285,10 @@
                     badgeHtml = `<span class="text-black font-black text-[10px]">✓ CLEAR</span>`;
                 }
 
+                // Inject Arena Status Badge next to name if exists
+                if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-red-700 shadow-sm ml-2">🔴 PLAYING</span>`;
+                if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-orange-800 shadow-sm ml-2">⏳ BOOKED</span>`;
+
                 if (currentActiveWa === group.wa) cardClass += " border-4 border-[#FF6B00]";
 
                 const jam = group.lastMsgDate.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
@@ -237,7 +297,10 @@
                 listContainer.innerHTML += `
                     <div onclick="openChat('${group.wa}')" class="${cardClass}">
                         <div class="flex justify-between items-start mb-1">
-                            <div class="font-black text-black text-sm truncate pr-2">${group.name}</div>
+                            <div class="font-black text-black text-sm flex items-center pr-2 truncate">
+                                <span class="truncate">${group.name}</span> 
+                                ${arenaBadgeHtml}
+                            </div>
                             <div class="text-[10px] text-black font-bold whitespace-nowrap bg-white px-1 rounded border border-black">${jam}</div>
                         </div>
                         <div class="flex justify-between items-center mt-2">
@@ -248,10 +311,12 @@
                 `;
             });
 
-            // Update Dashboard Angka
+            // Update Dashboard Angka Top Cards
             document.getElementById('sla-total').innerText = groupedGroupsArray.length;
             document.getElementById('sla-waiting').innerText = slaWaiting;
             document.getElementById('sla-breach').innerText = slaBreach;
+            document.getElementById('sla-playing').innerText = countPlaying;
+            document.getElementById('sla-booked').innerText = countBooked;
         }
 
         function openChat(wa, isAutoUpdate = false) {
@@ -259,8 +324,12 @@
             const group = groupedGroupsArray.find(g => g.wa === wa);
             if (!group) return;
 
+            let arenaBadgeHtml = "";
+            if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded font-black border border-red-700">🔴 PLAYING</span>`;
+            if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[10px] px-2 py-1 rounded font-black border border-orange-800">⏳ BOOKED</span>`;
+
             // UI Sesuaikan
-            document.getElementById('chat-name').innerText = group.name;
+            document.getElementById('chat-name').innerHTML = `${group.name} ${arenaBadgeHtml}`;
             document.getElementById('chat-number').innerText = wa.includes('@') ? "WhatsApp Number" : "+" + wa;
             document.getElementById('avatar-placeholder').innerText = group.name.charAt(0).toUpperCase();
             
@@ -314,10 +383,10 @@
                 container.innerHTML += `
                     <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'}">
                         <div class="bubble ${isAdmin ? 'bubble-admin' : 'bubble-customer'} mario-border mario-shadow-sm flex flex-col">
-                            <div class="text-black font-semibold">${msg.pesan}</div>
+                            <div class="text-black font-semibold break-words">${msg.pesan}</div>
                             <div class="flex justify-between items-end gap-3 mt-1">
                                 <div>${delayStamp}</div>
-                                <div class="text-[10px] text-black opacity-60 font-black">
+                                <div class="text-[10px] text-black opacity-60 font-black whitespace-nowrap">
                                     ${timeStr} ${checkmark}
                                 </div>
                             </div>
@@ -326,6 +395,7 @@
                 `;
             });
 
+            // Behavior Mobile Menu Buka Tutup Chat
             if (window.innerWidth < 768 && !isAutoUpdate) {
                 document.getElementById('sidebar').classList.add('hidden');
                 document.getElementById('chat-window').classList.remove('hidden');
@@ -340,8 +410,10 @@
             renderSidebar();
         }
 
-        fetchData();
-        setInterval(fetchData, 30000);
+        // Initialize fetching
+        fetchAllData();
+        setFilter('ALL'); // Initialize active state on load
+        setInterval(fetchAllData, 30000);
     </script>
 </body>
 </html>
