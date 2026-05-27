@@ -51,7 +51,7 @@
         <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
     </div>
 
-    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-md">
         <div class="max-w-7xl mx-auto header-container">
             <div class="header-top-row flex justify-between items-center gap-4">
                 <div class="flex items-center gap-3 w-full md:w-auto">
@@ -82,7 +82,7 @@
             WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
             UNITS: [ 
                 { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
-                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 6, label: 'BANDA' }, 
                 { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
             ]
         };
@@ -95,9 +95,7 @@
 
         const APP = {
             init: () => {
-                const uName = STATE.user.username || STATE.user.id_user_arena || 'User';
-                const uRole = STATE.user.role || 'Role';
-                document.getElementById('user-info-text').innerText = `${String(uName).toUpperCase()} | ${String(uRole).toUpperCase()}`;
+                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${STATE.user.role.toUpperCase()}`;
                 APP.loadDashboard();
             },
             
@@ -122,10 +120,8 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI DATA...');
-                const fetchRole = STATE.user.role === 'manager' ? 'admin' : STATE.user.role;
-                const fetchBranch = STATE.user.role === 'manager' ? 'ALL' : (STATE.user.branch || 'ALL');
-                
-                const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
+                // Pastikan selalu ambil ALL branch agar tampilan dan data admin/manager persis sama
+                const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
                 APP.hideLoader();
                 
                 let raw = Array.isArray(res) ? res.map((i, idx) => { let d = i.json || i; if (i.id !== undefined && d.id === undefined) d.id = i.id; d._dbIndex = idx; return d; }) : [];
@@ -135,7 +131,7 @@
             },
 
             getUnitStatusRaw: (uNum) => {
-                const logs = STATE.logs.filter(l => String(l.unit_arena || '').replace(/\D/g, '') === String(uNum));
+                const logs = STATE.logs.filter(l => String(l.unit_arena).replace(/\D/g, '') === String(uNum));
                 logs.sort((a,b) => new Date(String(b.jam_mulai_sewa || b.createdAt).replace(' ','T')) - new Date(String(a.jam_mulai_sewa || a.createdAt).replace(' ','T')));
                 return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
             },
@@ -183,14 +179,9 @@
                     </div>`;
                 }
 
-                let allowedUnits = CONFIG.UNITS;
-                if (STATE.user.role === 'admin') {
-                    const branch = STATE.user.branch || '';
-                    allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4)));
-                }
-
-                let uHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 mb-4">';
-                allowedUnits.forEach(u => {
+                // Tampilkan semua 8 Unit tanpa difilter berdasarkan role
+                let uHtml = '<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 mb-4">';
+                CONFIG.UNITS.forEach(u => {
                     const s = APP.getUnitStatusRaw(u.id); 
                     let bg = 'bg-green-500 text-white border-green-700'; let txt = 'KOSONG';
                     if(['playing','main'].includes(s)){ bg = 'bg-red-600 text-white border-red-800'; txt = 'PLAYING'; } 
@@ -206,11 +197,19 @@
                 });
                 uHtml += '</div>';
 
-                const filterCabangHtml = STATE.user.role === 'manager' 
-                    ? `<select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-full md:w-auto">
-                        <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
-                       </select>` 
-                    : `<input type="hidden" id="log-filter-cabang" value="${STATE.user.branch || 'ALL'}">`;
+                // Tampilkan Filter Dropdown untuk semua role, pre-selected ke cabang masing-masing jika ada
+                let b = STATE.user.branch || 'ALL';
+                let isBanda = b.includes('Banda') ? 'selected' : '';
+                let isSabang = b.includes('Sabang') ? 'selected' : '';
+                let isAtim = (b.includes('Timur') || b.includes('Atim')) ? 'selected' : '';
+
+                const filterCabangHtml = `
+                    <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
+                        <option value="ALL">Semua Cabang</option>
+                        <option value="Sabang" ${isSabang}>Sabang</option>
+                        <option value="Banda" ${isBanda}>Banda Aceh</option>
+                        <option value="Aceh Timur" ${isAtim}>Aceh Timur</option>
+                    </select>`;
 
                 return `
                     <div class="mario-card p-4 md:p-6 animate-pop w-full mx-auto">
@@ -221,12 +220,16 @@
                             <h3 class="font-black text-sm uppercase">LOGS BULAN INI</h3>
                             <div class="flex gap-2 w-full md:w-auto">
                                 ${filterCabangHtml}
-                                <select id="log-filter-status" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold text-gray-700 w-full md:w-auto ${STATE.user.role === 'admin' ? 'w-full' : 'w-1/2'}">
-                                    <option value="ALL">Semua Status</option><option value="booked">Booked ⏳</option><option value="playing">Playing 🔴</option><option value="finished">Finished ✅</option><option value="batal">Batal ❌</option>
+                                <select id="log-filter-status" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold text-gray-700 w-1/2 md:w-auto">
+                                    <option value="ALL">Semua Status</option>
+                                    <option value="booked">Booked ⏳</option>
+                                    <option value="playing">Playing 🔴</option>
+                                    <option value="finished">Finished ✅</option>
+                                    <option value="batal">Batal ❌</option>
                                 </select>
                             </div>
                         </div>
-                        <div id="filtered-logs-container" class="w-full">${APP.getLogListHTML('ALL', 'ALL')}</div>
+                        <div id="filtered-logs-container" class="w-full">${APP.getLogListHTML(b, 'ALL')}</div>
                     </div>`;
             },
 
@@ -238,8 +241,6 @@
 
             getLogListHTML: (cabFilter, statFilter) => {
                 const mStr = APP.getMonthStr(); 
-                
-                if (STATE.user.role === 'admin') cabFilter = STATE.user.branch || 'ALL';
 
                 const filtered = STATE.logs.filter(l => {
                     const s = String(l.status_unit_arena).toLowerCase();
@@ -247,7 +248,15 @@
                     if (statFilter !== 'ALL' && s !== statFilter) return false; 
                     let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
                     if (safeDate.substring(0,7) !== mStr && safeDate !== '') return false;
-                    if (cabFilter !== 'ALL' && !(l.cabang_arena === cabFilter || (cabFilter==='Banda'&&l.cabang_arena==='Banda Aceh') || (cabFilter==='Aceh Timur'&&l.cabang_arena==='Atim'))) return false;
+                    
+                    if (cabFilter !== 'ALL' && cabFilter !== '') {
+                        let c = cabFilter.toLowerCase();
+                        let lCab = String(l.cabang_arena).toLowerCase();
+                        if (c === 'banda' && !lCab.includes('banda')) return false;
+                        if (c === 'sabang' && !lCab.includes('sabang')) return false;
+                        if (c === 'aceh timur' && (!lCab.includes('atim') && !lCab.includes('timur'))) return false;
+                    }
+                    
                     return true;
                 });
 
@@ -368,8 +377,11 @@
                     APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: 'Belum', unit: currentUnit, admin_name: STATE.user.username, keterangan: '' }).then(() => APP.loadDashboard()); 
                 } 
             },
-            confirmPayment: async (method) => { APP.closeModal('modal-payment'); APP.showLoader('UPDATE BAYAR...'); await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: STATE.activeModalStat, pembayaran: `Lunas ${method}`, unit: STATE.activeModalUnit, admin_name: STATE.user.username, keterangan: '' }); await APP.loadDashboard(); },
-            
+            confirmPayment: async (method) => { 
+                APP.closeModal('modal-payment'); APP.showLoader('UPDATE BAYAR...'); 
+                await APP.api({ action: 'update_status', row_id: STATE.activeModalRowId, status_unit: STATE.activeModalStat, pembayaran: `Lunas ${method}`, unit: STATE.activeModalUnit, admin_name: STATE.user.username, keterangan: '' }); 
+                await APP.loadDashboard(); 
+            },
             openAccModal: (id, pay, branch, dateStr) => { 
                 STATE.activeAccId = id; STATE.activeAccPay = pay; 
                 document.getElementById('acc-modal-unit').innerHTML = APP.generateUnitOptionsHtml(branch, dateStr); 
