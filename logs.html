@@ -51,7 +51,7 @@
         <h2 id="loader-text" class="text-xl font-black text-white">MEMUAT SISTEM...</h2>
     </div>
 
-    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-md">
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div class="max-w-7xl mx-auto header-container">
             <div class="header-top-row flex justify-between items-center gap-4">
                 <div class="flex items-center gap-3 w-full md:w-auto">
@@ -95,7 +95,9 @@
 
         const APP = {
             init: () => {
-                document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${STATE.user.role.toUpperCase()}`;
+                const uName = STATE.user.username || STATE.user.id_user_arena || 'User';
+                const uRole = STATE.user.role || 'Role';
+                document.getElementById('user-info-text').innerText = `${String(uName).toUpperCase()} | ${String(uRole).toUpperCase()}`;
                 APP.loadDashboard();
             },
             
@@ -121,7 +123,7 @@
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI DATA...');
                 const fetchRole = STATE.user.role === 'manager' ? 'admin' : STATE.user.role;
-                const fetchBranch = STATE.user.role === 'manager' ? 'ALL' : STATE.user.branch;
+                const fetchBranch = STATE.user.role === 'manager' ? 'ALL' : (STATE.user.branch || 'ALL');
                 
                 const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
                 APP.hideLoader();
@@ -133,14 +135,14 @@
             },
 
             getUnitStatusRaw: (uNum) => {
-                const logs = STATE.logs.filter(l => String(l.unit_arena).replace(/\D/g, '') === String(uNum));
+                const logs = STATE.logs.filter(l => String(l.unit_arena || '').replace(/\D/g, '') === String(uNum));
                 logs.sort((a,b) => new Date(String(b.jam_mulai_sewa || b.createdAt).replace(' ','T')) - new Date(String(a.jam_mulai_sewa || a.createdAt).replace(' ','T')));
                 return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
             },
 
             generateUnitOptionsHtml: (branch, dateStr) => {
-                let allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(String(branch || '').toUpperCase().substring(0,4)));
-                return allowedUnits.map(u => {
+                const branchStr = String(branch || '').toUpperCase().substring(0,4);
+                return CONFIG.UNITS.filter(u => u.label.includes(branchStr)).map(u => {
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
@@ -181,13 +183,12 @@
                     </div>`;
                 }
 
-                // Filter cabang berdasarkan yang login
                 let allowedUnits = CONFIG.UNITS;
                 if (STATE.user.role === 'admin') {
-                    allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(STATE.user.branch.toUpperCase().substring(0,4)));
+                    const branch = STATE.user.branch || '';
+                    allowedUnits = CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4)));
                 }
 
-                // LAYOUT BERJEJER RAPI TANPA SCROLL HORIZONTAL (Menggunakan Grid)
                 let uHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 mb-4">';
                 allowedUnits.forEach(u => {
                     const s = APP.getUnitStatusRaw(u.id); 
@@ -206,10 +207,10 @@
                 uHtml += '</div>';
 
                 const filterCabangHtml = STATE.user.role === 'manager' 
-                    ? `<select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
+                    ? `<select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-full md:w-auto">
                         <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
                        </select>` 
-                    : `<input type="hidden" id="log-filter-cabang" value="${STATE.user.branch}">`;
+                    : `<input type="hidden" id="log-filter-cabang" value="${STATE.user.branch || 'ALL'}">`;
 
                 return `
                     <div class="mario-card p-4 md:p-6 animate-pop w-full mx-auto">
@@ -238,7 +239,7 @@
             getLogListHTML: (cabFilter, statFilter) => {
                 const mStr = APP.getMonthStr(); 
                 
-                if (STATE.user.role === 'admin') cabFilter = STATE.user.branch;
+                if (STATE.user.role === 'admin') cabFilter = STATE.user.branch || 'ALL';
 
                 const filtered = STATE.logs.filter(l => {
                     const s = String(l.status_unit_arena).toLowerCase();
@@ -272,7 +273,7 @@
 
             renderSingleLogCard: (l) => {
                 const rId = l.id || l.row_number || l._rowIndex || '';
-                const uLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
+                const uLabel = String(l.unit_arena || '').toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
                 const cLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
                 let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
                 let dStr = ''; 
