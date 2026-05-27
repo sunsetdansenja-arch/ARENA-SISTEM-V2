@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <div id="chat-window" class="flex-1 hidden md:flex flex-col bg-white mario-border mario-shadow rounded-2xl relative h-full overflow-hidden min-h-0 w-full absolute md:static top-0 left-0 z-20">
+    <div id="chat-window" class="hidden md:flex flex-1 flex-col bg-white mario-border mario-shadow rounded-2xl relative h-full overflow-hidden min-h-0 w-full">
         
         <div class="bg-black text-white p-3 md:p-4 flex items-center border-b-3 border-black z-10 h-[75px] shrink-0">
             <button onclick="backToList()" class="md:hidden mr-4 p-2 bg-white text-black rounded-lg mario-border font-black text-xs active:translate-y-1">
@@ -123,12 +123,11 @@
         const ARENA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1";
         
         let allLogs = []; 
-        let activeArenaData = {}; // Format: { "628xxx": "booked", "628yyy": "playing" }
+        let activeArenaData = {}; 
         let groupedGroupsArray = []; 
         let currentActiveWa = null;
-        let currentFilter = 'ALL'; // ALL, WAITING, BREACH, UNREAD, BOOKED, PLAYING
+        let currentFilter = 'ALL'; 
 
-        // Fetch Both WA Logs and Arena Active Logs
         async function fetchAllData() {
             try {
                 const [waRes, arenaRes] = await Promise.all([
@@ -146,7 +145,6 @@
                         let d = item.json || item;
                         let stat = String(d.status_unit_arena).toLowerCase();
                         if (stat === 'booked' || stat === 'playing' || stat === 'main' || stat === 'book') {
-                            // Standarisasi status name & WA number
                             let normStat = (stat === 'main') ? 'playing' : (stat === 'book' ? 'booked' : stat);
                             let waRaw = String(d.nomor_pelanggan_arena || '').replace(/\D/g, '').replace(/^0/, '62');
                             if(waRaw) activeArenaData[waRaw] = normStat;
@@ -175,7 +173,6 @@
         function processGroups(logs) {
             let tempGroups = {};
             
-            // 1. Grouping Data
             logs.forEach(l => {
                 if(!tempGroups[l.nomor_wa]) {
                     tempGroups[l.nomor_wa] = { messages: [], name: l.nomor_wa, wa: l.nomor_wa };
@@ -186,15 +183,12 @@
                 tempGroups[l.nomor_wa].messages.push(l);
             });
 
-            // 2. Kalkulasi Properti Sorting & Filter & Arena Status
             groupedGroupsArray = Object.values(tempGroups).map(group => {
-                const lastMsg = group.messages[0]; // Karena data dr n8n dibalik
+                const lastMsg = group.messages[0]; 
                 const lastMsgDate = new Date(lastMsg.waktu.replace(' ', 'T'));
                 const diffMins = (new Date() - lastMsgDate) / 60000;
                 
-                // Cek status WA ini di database Arena (apakah sedang Booked / Playing)
                 group.arenaStatus = activeArenaData[group.wa] || null;
-
                 group.isWaiting = lastMsg.tipe === 'Masuk';
                 group.isBreach = group.isWaiting && diffMins > 8;
                 group.diffMins = diffMins;
@@ -210,7 +204,6 @@
         function setFilter(filterType) {
             currentFilter = filterType;
             
-            // Atur UI Tabs bawah
             if (filterType === 'UNREAD') {
                 document.getElementById('tab-unread').classList.add('filter-active');
                 document.getElementById('tab-all').classList.add('text-gray-400');
@@ -221,7 +214,6 @@
                 document.getElementById('tab-unread').classList.add('text-gray-400');
             }
 
-            // Atur visual style untuk top cards
             ['ALL', 'WAITING', 'BREACH', 'PLAYING', 'BOOKED'].forEach(id => {
                 const card = document.getElementById(`card-${id}`);
                 if (card) {
@@ -236,7 +228,6 @@
         function renderSidebar() {
             let slaWaiting = 0, slaBreach = 0, countPlaying = 0, countBooked = 0;
 
-            // Hitung SLA Global & Status Arena
             groupedGroupsArray.forEach(g => {
                 if (g.isWaiting) slaWaiting++;
                 if (g.isBreach) slaBreach++;
@@ -244,17 +235,15 @@
                 if (g.arenaStatus === 'booked') countBooked++;
             });
 
-            // Terapkan Filter
             let filteredArray = groupedGroupsArray.filter(g => {
                 if (currentFilter === 'WAITING') return g.isWaiting;
                 if (currentFilter === 'BREACH') return g.isBreach;
                 if (currentFilter === 'UNREAD') return g.isWaiting;
                 if (currentFilter === 'PLAYING') return g.arenaStatus === 'playing';
                 if (currentFilter === 'BOOKED') return g.arenaStatus === 'booked';
-                return true; // ALL
+                return true; 
             });
 
-            // SORTING: Belum dibalas (isWaiting) DI ATAS, lalu berdasarkan waktu terbaru
             filteredArray.sort((a, b) => {
                 if (a.isWaiting && !b.isWaiting) return -1;
                 if (!a.isWaiting && b.isWaiting) return 1;
@@ -269,7 +258,6 @@
             }
 
             filteredArray.forEach(group => {
-                // Styling Card Mario
                 let cardClass = "p-3 rounded-xl mario-border cursor-pointer transition-transform active:translate-y-1 mb-2 ";
                 let badgeHtml = "";
                 let arenaBadgeHtml = "";
@@ -285,7 +273,6 @@
                     badgeHtml = `<span class="text-black font-black text-[10px]">✓ CLEAR</span>`;
                 }
 
-                // Inject Arena Status Badge next to name if exists
                 if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-red-700 shadow-sm ml-2">🔴 PLAYING</span>`;
                 if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-orange-800 shadow-sm ml-2">⏳ BOOKED</span>`;
 
@@ -311,7 +298,6 @@
                 `;
             });
 
-            // Update Dashboard Angka Top Cards
             document.getElementById('sla-total').innerText = groupedGroupsArray.length;
             document.getElementById('sla-waiting').innerText = slaWaiting;
             document.getElementById('sla-breach').innerText = slaBreach;
@@ -328,7 +314,6 @@
             if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded font-black border border-red-700">🔴 PLAYING</span>`;
             if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[10px] px-2 py-1 rounded font-black border border-orange-800">⏳ BOOKED</span>`;
 
-            // UI Sesuaikan
             document.getElementById('chat-name').innerHTML = `${group.name} ${arenaBadgeHtml}`;
             document.getElementById('chat-number').innerText = wa.includes('@') ? "WhatsApp Number" : "+" + wa;
             document.getElementById('avatar-placeholder').innerText = group.name.charAt(0).toUpperCase();
@@ -336,11 +321,10 @@
             const container = document.getElementById('message-container');
             container.innerHTML = '';
             
-            // Urutkan untuk render chat (Terlama -> Terbaru)
             const sortedMessages = [...group.messages].sort((a,b) => new Date(a.waktu.replace(' ','T')) - new Date(b.waktu.replace(' ','T')));
             
             let lastDateStr = "";
-            let earliestUnansweredTime = null; // Tracker untuk Stamp Delay
+            let earliestUnansweredTime = null; 
 
             sortedMessages.forEach(msg => {
                 const msgDate = new Date(msg.waktu.replace(' ', 'T'));
@@ -362,12 +346,9 @@
                 const isAdmin = msg.tipe === 'Keluar';
                 let delayStamp = "";
 
-                // KALKULASI STAMP DELAY
                 if (!isAdmin) {
-                    // Jika customer chat dan belum ada timer, mulai timer
                     if (!earliestUnansweredTime) earliestUnansweredTime = msgTimeMs;
                 } else if (isAdmin && earliestUnansweredTime) {
-                    // Jika admin membalas, hitung selisih dari chat customer sebelumnya
                     const diffSec = (msgTimeMs - earliestUnansweredTime) / 1000;
                     if (diffSec > 0) {
                         const mins = Math.floor(diffSec / 60);
@@ -375,7 +356,7 @@
                         let colorClass = mins > 8 ? 'bg-red-600' : 'bg-black';
                         delayStamp = `<span class="ml-2 mt-1 inline-block ${colorClass} text-white px-2 py-0.5 rounded-md text-[9px] font-black mario-border">⏱️ ${mins}m ${secs}s</span>`;
                     }
-                    earliestUnansweredTime = null; // Reset tracker
+                    earliestUnansweredTime = null; 
                 }
                 
                 const checkmark = isAdmin ? `<span class="text-black ml-1">✓✓</span>` : '';
@@ -395,24 +376,32 @@
                 `;
             });
 
-            // Behavior Mobile Menu Buka Tutup Chat
+            // PERBAIKAN BUG HP: Sidebar di-hidden dan Chat Window diubah menjadi flex
             if (window.innerWidth < 768 && !isAutoUpdate) {
                 document.getElementById('sidebar').classList.add('hidden');
+                document.getElementById('sidebar').classList.remove('flex');
+                
                 document.getElementById('chat-window').classList.remove('hidden');
+                document.getElementById('chat-window').classList.add('flex');
             }
             container.scrollTop = container.scrollHeight;
         }
 
         function backToList() {
             currentActiveWa = null;
+            
+            // PERBAIKAN BUG HP: Kembalikan class flex pada sidebar dan sembunyikan Chat Window
             document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('sidebar').classList.add('flex');
+            
             document.getElementById('chat-window').classList.add('hidden');
+            document.getElementById('chat-window').classList.remove('flex');
+            
             renderSidebar();
         }
 
-        // Initialize fetching
         fetchAllData();
-        setFilter('ALL'); // Initialize active state on load
+        setFilter('ALL'); 
         setInterval(fetchAllData, 30000);
     </script>
 </body>
