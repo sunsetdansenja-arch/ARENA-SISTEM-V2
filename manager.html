@@ -30,7 +30,7 @@
         .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
-        .animate-pop { animation: popIn 0.3s forwards; }
+        .animate-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
         .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
@@ -40,8 +40,8 @@
         .progress-bar-stripes { background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent); background-size: 20px 20px; animation: progress-animation 1s linear infinite; }
         @keyframes progress-animation { from { background-position: 20px 0; } to { background-position: 0 0; } }
         
-        /* Font sekunder untuk angka agar lebih tegas */
         .font-num { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
     </style>
 </head>
 <body class="pb-24 md:pb-6">
@@ -111,25 +111,46 @@
             </div>
         </div>
 
+        <!-- FITUR 1: VERSUS MODE (BULAN LALU VS BULAN INI) -->
+        <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2">PERTANDINGAN OMSET</h2>
+        <div class="mario-card p-0 mb-8 border-4 border-black overflow-hidden flex flex-col md:flex-row shadow-[4px_4px_0px_#000]">
+            <div class="flex-1 bg-gray-200 p-5 text-center flex flex-col justify-center items-center relative md:border-r-4 md:border-black">
+                <p class="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Pencapaian Bulan Lalu <br>(Tgl 1 - <span class="current-date-text"></span>)</p>
+                <p id="vs-last-month" class="text-2xl md:text-3xl font-black text-gray-600 font-num z-10">Rp 0</p>
+                <div class="absolute -bottom-4 -left-4 text-6xl opacity-10">📉</div>
+            </div>
+            
+            <div class="bg-black text-white px-4 py-3 flex items-center justify-center border-y-4 border-black md:border-y-0 text-xl md:text-2xl font-black italic z-20 md:-mx-4 shadow-[4px_4px_0px_#FFD700] rounded-lg">
+                VS
+            </div>
+            
+            <div class="flex-1 bg-[#fff7ed] p-5 text-center flex flex-col justify-center items-center relative md:border-l-4 md:border-black">
+                <p class="text-[10px] md:text-xs font-black text-orange-700 uppercase tracking-widest mb-1">Pencapaian Bulan Ini <br>(Tgl 1 - <span class="current-date-text"></span>)</p>
+                <p id="vs-current-month" class="text-3xl md:text-4xl font-black text-[#FF6B00] font-num z-10">Rp 0</p>
+                <div id="vs-badge" class="mt-3 text-[10px] md:text-xs font-black uppercase px-4 py-1.5 rounded-full border-2 border-black shadow-sm z-10"></div>
+                <div class="absolute -top-4 -right-4 text-6xl opacity-10">🔥</div>
+            </div>
+        </div>
+
         <!-- DECISION MAKING INSIGHTS (4 Kotak) -->
         <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2">Decision Making Insights</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
-            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center">
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center shadow-[4px_4px_0px_#000]">
                 <div class="w-10 h-10 rounded-full bg-blue-100 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">📈</div>
                 <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-tight">Rata-Rata Harian</p>
                 <p id="insight-daily" class="text-xl md:text-2xl font-black text-blue-600 mt-1 font-num">0 <span class="text-[10px] font-bold text-gray-500">trx</span></p>
             </div>
-            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-green-50">
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-green-50 shadow-[4px_4px_0px_#000]">
                 <div class="w-10 h-10 rounded-full bg-green-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">🔥</div>
                 <p class="text-[9px] font-bold text-green-700 uppercase tracking-widest leading-tight">Hari Tersibuk</p>
                 <p id="insight-maxday" class="text-sm md:text-base font-black text-green-800 mt-1 uppercase leading-tight">-<br><span id="insight-maxcount" class="text-xs font-black text-black font-num">0 trx</span></p>
             </div>
-            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-yellow-50">
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-yellow-50 shadow-[4px_4px_0px_#000]">
                 <div class="w-10 h-10 rounded-full bg-yellow-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">💰</div>
                 <p class="text-[9px] font-bold text-yellow-700 uppercase tracking-widest leading-tight">Nilai Rata-rata</p>
                 <p id="insight-avgval" class="text-base md:text-lg font-black text-yellow-800 mt-1 font-num">Rp 0</p>
             </div>
-            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-red-50">
+            <div class="mario-card p-4 border-2 border-black flex flex-col justify-between items-center text-center bg-red-50 shadow-[4px_4px_0px_#000]">
                 <div class="w-10 h-10 rounded-full bg-red-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xl mb-2">⚠️</div>
                 <p class="text-[9px] font-bold text-red-700 uppercase tracking-widest leading-tight">Cancel Rate</p>
                 <p id="insight-cancel" class="text-xl md:text-2xl font-black text-red-600 mt-1 font-num">0%</p>
@@ -137,7 +158,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             <!-- KPI ADMIN -->
             <div class="mario-card p-5 md:p-6 border-4 border-black">
                 <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-black pb-2">
@@ -158,8 +178,39 @@
                 </div>
             </div>
         </div>
-
     </main>
+
+    <!-- FITUR 2: MILESTONE POP-UP MODAL -->
+    <div id="modal-milestone" class="modal-overlay hidden">
+        <div class="mario-card p-0 w-full max-w-sm overflow-hidden animate-pop border-4 border-black shadow-[8px_8px_0px_#000]">
+            <div class="bg-yellow-400 p-4 text-center border-b-4 border-black">
+                <div class="text-6xl mb-2 animate-bounce">🏆</div>
+                <h2 class="text-2xl font-black uppercase text-black tracking-widest">ACHIEVEMENT!</h2>
+            </div>
+            <div class="p-6 text-center space-y-5 bg-white relative">
+                <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
+                    <div class="absolute top-2 left-2 text-4xl">✨</div>
+                    <div class="absolute bottom-2 right-2 text-4xl">🔥</div>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-sm font-black text-gray-600 uppercase">Target Berhasil Ditembus:</p>
+                    <p class="text-6xl font-black text-[#FF6B00] font-num leading-none my-2"><span id="milestone-num">0</span> <span class="text-xl text-black">TRX</span></p>
+                    
+                    <div class="bg-blue-50 border-2 border-blue-400 p-4 rounded-xl shadow-sm mt-4">
+                        <p id="milestone-quote" class="text-sm font-bold text-blue-900 italic leading-snug">"Kerja bagus! Gas terus!"</p>
+                    </div>
+                    
+                    <div class="bg-gray-100 p-3 rounded-lg border-2 border-dashed border-gray-400 mt-4">
+                        <p class="text-xs font-black text-gray-600 uppercase">
+                            🔥 Sisa <span id="milestone-left" class="text-red-600 text-lg mx-1">0</span> trx menuju target 150!
+                        </p>
+                    </div>
+                </div>
+                
+                <button onclick="APP.closeMilestone()" class="w-full mario-btn bg-black text-white p-4 text-sm font-black uppercase shadow-[4px_4px_0px_#FFD700] hover:bg-gray-800 relative z-10">GAS LANJUTKAN! 🚀</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Navigasi Mobile -->
     <div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
@@ -197,10 +248,14 @@
             logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0),
             
-            // Format Bulan YYYY-MM
-            getMonthStr: () => { 
-                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); 
-                return d.toISOString().substring(0,7); 
+            // Helper pengambil bulan (Kebal Timezone Bug)
+            getYearMonthStr: (offsetMonths = 0) => {
+                let d = new Date();
+                d.setDate(1); 
+                d.setMonth(d.getMonth() - offsetMonths);
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                return `${y}-${m}`;
             },
             
             api: async (p) => {
@@ -221,38 +276,53 @@
             },
 
             processInsights: () => {
-                const monthStr = APP.getMonthStr(); // Misal "2026-05"
+                const currentMonthStr = APP.getYearMonthStr(0); 
+                const lastMonthStr = APP.getYearMonthStr(1); 
                 const now = new Date();
-                const currentDayOfMoth = now.getDate(); // Tanggal berjalan bulan ini
+                const currentDayOfMonth = now.getDate(); 
                 
                 let totalValid = 0;
                 let totalRevenue = 0;
+                let lastMonthPaceRevenue = 0; // Omset bulan lalu di tanggal yang sama
+                
                 let totalBatal = 0;
                 let totalAll = 0;
                 
                 let kpis = {};
                 let branchCount = { 'Banda': 0, 'Sabang': 0, 'Aceh Timur': 0 };
                 
-                // Variabel untuk menghitung hari tersibuk (Senin, Selasa, dll)
                 const dayNames = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
                 let dayCounts = { 'SENIN': 0, 'SELASA': 0, 'RABU': 0, 'KAMIS': 0, 'JUMAT': 0, 'SABTU': 0, 'MINGGU': 0 };
 
                 STATE.logs.forEach(l => {
                     let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    if (!safeDate) return;
+
+                    let logDateObj = new Date(safeDate.replace(' ', 'T'));
+                    let logDay = logDateObj.getDate();
+                    let logMonthStr = safeDate.substring(0,7);
                     
-                    // Filter pastikan hanya data bulan ini (cocok YYYY-MM)
-                    if (!safeDate.startsWith(monthStr)) return;
+                    const status = String(l.status_unit_arena).toLowerCase();
+                    const revenue = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
+
+                    // Kalkulasi Pace Bulan Lalu (Hanya untuk Versus Mode)
+                    if (logMonthStr === lastMonthStr && ['playing', 'main', 'finished', 'selesai', 'booked', 'book'].includes(status)) {
+                        if (logDay <= currentDayOfMonth) {
+                            lastMonthPaceRevenue += revenue;
+                        }
+                    }
+
+                    // Hanya proses Data Bulan Ini ke bawah
+                    if (logMonthStr !== currentMonthStr) return;
 
                     totalAll++;
                     
-                    const status = String(l.status_unit_arena).toLowerCase();
                     let creatorRaw = String(l.admin_creator || l.Users || l.admin_name || '').toLowerCase();
                     if (creatorRaw === 'self-booking' || creatorRaw === 'auto (web)' || creatorRaw === '') {
                         creatorRaw = String(l.Users || 'Sistem').toLowerCase();
                     }
                     const admin = creatorRaw.toUpperCase();
                     const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
-                    const revenue = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
 
                     if (status === 'batal') {
                         totalBatal++;
@@ -267,16 +337,35 @@
                         if(branchCount[branch] !== undefined) branchCount[branch]++;
 
                         // Hitung Hari Tersibuk berdasarkan nama hari
-                        let dObj = new Date(safeDate.replace(' ', 'T'));
-                        if (!isNaN(dObj.getTime())) {
-                            let dayIndex = dObj.getDay();
+                        if (!isNaN(logDateObj.getTime())) {
+                            let dayIndex = logDateObj.getDay();
                             dayCounts[dayNames[dayIndex]]++;
                         }
                     }
                 });
 
                 // ==========================
-                // 1. MANAGER TARGET (150)
+                // FITUR 1: UPDATE UI VERSUS MODE
+                // ==========================
+                document.querySelectorAll('.current-date-text').forEach(el => el.innerText = currentDayOfMonth);
+                document.getElementById('vs-last-month').innerText = APP.formatRp(lastMonthPaceRevenue);
+                document.getElementById('vs-current-month').innerText = APP.formatRp(totalRevenue);
+                
+                const vsBadge = document.getElementById('vs-badge');
+                if (totalRevenue > lastMonthPaceRevenue) {
+                    vsBadge.innerHTML = "🚀 MEMIMPIN TINGGALKAN BULAN LALU!";
+                    vsBadge.className = "mt-3 text-[10px] md:text-xs font-black uppercase px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_#000] bg-green-400 text-black z-10 animate-pulse";
+                } else if (totalRevenue < lastMonthPaceRevenue) {
+                    const selisih = lastMonthPaceRevenue - totalRevenue;
+                    vsBadge.innerHTML = `🚨 TERTINGGAL ${APP.formatRp(selisih)} DARI BULAN LALU!`;
+                    vsBadge.className = "mt-3 text-[10px] md:text-xs font-black uppercase px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_#000] bg-red-600 text-white z-10 animate-bounce";
+                } else {
+                    vsBadge.innerHTML = "⚖️ SEIMBANG DENGAN BULAN LALU";
+                    vsBadge.className = "mt-3 text-[10px] md:text-xs font-black uppercase px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_#000] bg-yellow-400 text-black z-10";
+                }
+
+                // ==========================
+                // 1. MANAGER TARGET (150) & FITUR 2: MILESTONES
                 // ==========================
                 const mgrTarget = 150;
                 const mgrPercent = Math.min(Math.round((totalValid / mgrTarget) * 100), 100);
@@ -288,10 +377,18 @@
                 if (totalValid >= mgrTarget) mgrStatusTxt = "🎉 LUAR BIASA! TARGET MANAJER BULAN INI TELAH TERCAPAI.";
                 document.getElementById('mgr-status-text').innerText = mgrStatusTxt;
 
+                // Cek Milestone (Setiap 10 Transaksi)
+                const currentMilestone = Math.floor(totalValid / 10) * 10;
+                const lastAck = parseInt(localStorage.getItem('arena_milestone') || '0');
+                
+                if (currentMilestone >= 10 && currentMilestone > lastAck && currentMilestone <= 150) {
+                    APP.showMilestone(currentMilestone, mgrTarget - totalValid);
+                }
+
                 // ==========================
                 // 2. RATA-RATA HARIAN
                 // ==========================
-                const dailyAvg = totalValid > 0 ? (totalValid / currentDayOfMoth).toFixed(1) : 0;
+                const dailyAvg = totalValid > 0 ? (totalValid / currentDayOfMonth).toFixed(1) : 0;
                 document.getElementById('insight-daily').innerHTML = `${dailyAvg} <span class="text-[10px] font-bold text-gray-500">trx</span>`;
 
                 // ==========================
@@ -373,6 +470,32 @@
                         </div>`;
                     }).join('');
                 }
+            },
+
+            // Fungsi untuk Milestone Pop-up
+            showMilestone: (milestone, left) => {
+                const quotes = [
+                    "Setiap keringat hari ini adalah investasi untuk cuan besok! 🔥",
+                    "Jangan kasih kendor bos! Hasil tidak akan pernah mengkhianati proses! 🚀",
+                    "Luar biasa! Konsistensi adalah kunci menembus batas dan limit! 💥",
+                    "Satu per satu, pelan tapi pasti kita ratakan target bulan ini! 🎯",
+                    "Kerja keras tim mulai membuahkan hasil, mari selesaikan dengan epik! 🏆",
+                    "Fokus! Milestone terlewati, mari hajar sisanya tanpa ampun! ⚔️"
+                ];
+                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                
+                document.getElementById('milestone-num').innerText = milestone;
+                document.getElementById('milestone-quote').innerText = `"${randomQuote}"`;
+                document.getElementById('milestone-left').innerText = left > 0 ? left : 0;
+                
+                document.getElementById('modal-milestone').classList.remove('hidden');
+                
+                // Simpan agar pop-up tidak muncul lagi di milestone yang sama
+                localStorage.setItem('arena_milestone', milestone.toString());
+            },
+
+            closeMilestone: () => {
+                document.getElementById('modal-milestone').classList.add('hidden');
             }
         };
 
