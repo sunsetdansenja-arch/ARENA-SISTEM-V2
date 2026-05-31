@@ -23,10 +23,15 @@
         .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
-        .animate-pop { animation: popIn 0.3s forwards; }
-        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95) translateY(10px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
         
         .font-num { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.3); border-radius: 4px; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(5px); }
 
         /* Print Optimization */
         @media print { 
@@ -56,7 +61,7 @@
     </div>
 
     <!-- HEADER -->
-    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 no-print">
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 no-print shadow-md">
         <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
             <button onclick="APP.goBack()" class="mario-btn bg-white text-black px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-black shadow-[2px_2px_0px_#FFD700]">◀ KEMBALI</button>
             <div class="text-right flex items-center gap-3">
@@ -84,8 +89,8 @@
                     <input type="date" id="filter-end" class="mario-input p-2 text-sm" onchange="APP.calculate()">
                 </div>
                 <div class="flex items-end gap-2">
-                    <button onclick="APP.setToday()" class="mario-btn bg-black text-white flex-1 p-2 text-xs font-black">HARI INI</button>
-                    <button onclick="APP.setThisMonth()" class="mario-btn bg-gray-200 text-black flex-1 p-2 text-xs font-black border-gray-400">BULAN INI</button>
+                    <button onclick="APP.setToday()" class="mario-btn bg-black text-white flex-1 p-2 text-xs font-black hover:bg-gray-800">HARI INI</button>
+                    <button onclick="APP.setThisMonth()" class="mario-btn bg-gray-200 text-black flex-1 p-2 text-xs font-black border-gray-400 hover:bg-gray-300">BULAN INI</button>
                 </div>
             </div>
         </div>
@@ -109,12 +114,34 @@
         </div>
 
         <!-- BRANCH BREAKDOWN -->
-        <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2">Rincian Kasir Per Daerah</h2>
+        <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2 flex items-center gap-2">
+            Rincian Kasir Per Daerah
+            <span class="text-[10px] bg-white px-2 py-0.5 rounded border border-black uppercase shadow-sm text-gray-500">Klik kartu untuk detail</span>
+        </h2>
         <div id="branch-container" class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
             <!-- Dirender via JS -->
         </div>
 
     </main>
+
+    <!-- MODAL RINCIAN TRANSAKSI -->
+    <div id="modal-details" class="modal-overlay hidden no-print">
+        <div class="mario-card p-0 w-full max-w-md overflow-hidden animate-pop border-4 border-black shadow-[8px_8px_0px_#000] flex flex-col max-h-[85vh]">
+            <div class="bg-black text-white p-4 flex justify-between items-center shrink-0 border-b-4 border-yellow-400">
+                <div>
+                    <h2 id="detail-title" class="text-sm font-black uppercase tracking-widest text-yellow-400">Detail Transaksi</h2>
+                    <p id="detail-subtitle" class="text-[10px] font-bold text-gray-300"></p>
+                </div>
+                <button onclick="APP.closeDetails()" class="text-white font-black text-2xl hover:text-red-500 transition-colors leading-none">&times;</button>
+            </div>
+            <div id="detail-content" class="p-4 bg-[#f8fafc] overflow-y-auto custom-scroll flex-1 space-y-4">
+                <!-- List per hari akan dirender di sini -->
+            </div>
+            <div class="p-3 bg-gray-200 shrink-0 border-t-2 border-black">
+                <button onclick="APP.closeDetails()" class="w-full mario-btn bg-white text-black p-3 text-xs font-black uppercase border-gray-400 hover:bg-gray-100">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <!-- PRINT TEMPLATE (Hidden from UI, visible on print) -->
     <div id="print-area" class="hidden p-6"></div>
@@ -166,7 +193,6 @@
             loadData: async () => {
                 document.getElementById('loader').classList.remove('hidden');
                 
-                // Ambil data (Bila admin hanya tarik cabangnya, bila manager tarik semua)
                 const fetchRole = session.role === 'manager' ? 'admin' : session.role;
                 const fetchBranch = session.role === 'manager' ? 'ALL' : session.branch;
                 
@@ -183,10 +209,11 @@
                 
                 let totGross = 0; let totCash = 0; let totTransfer = 0;
                 
+                // Tambahkan array untuk menyimpan log per metode bayar
                 STATE.branchData = {
-                    'Banda': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 },
-                    'Sabang': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 },
-                    'Aceh Timur': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 }
+                    'Banda': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0, logs_cash: [], logs_transfer: [] },
+                    'Sabang': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0, logs_cash: [], logs_transfer: [] },
+                    'Aceh Timur': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0, logs_cash: [], logs_transfer: [] }
                 };
 
                 STATE.logs.forEach(l => {
@@ -196,7 +223,6 @@
                     let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
                     let dOnly = safeDate.substring(0, 10);
                     
-                    // Filter Rentang Tanggal
                     if (startStr && dOnly < startStr) return;
                     if (endStr && dOnly > endStr) return;
 
@@ -205,27 +231,28 @@
                     const bRaw = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
                     const b = STATE.branchData[bRaw] ? bRaw : 'Banda';
 
-                    // Deteksi metode bayar
+                    l.final_val = val; // Simpan nilai final ke objek untuk mempermudah render
+                    l.date_only = dOnly;
+
                     if (payMethod.includes('cash')) {
                         totCash += val;
                         totGross += val;
                         STATE.branchData[b].cash += val;
                         STATE.branchData[b].trx_cash++;
+                        STATE.branchData[b].logs_cash.push(l);
                     } else if (payMethod.includes('transfer')) {
                         totTransfer += val;
                         totGross += val;
                         STATE.branchData[b].transfer += val;
                         STATE.branchData[b].trx_transfer++;
+                        STATE.branchData[b].logs_transfer.push(l);
                     }
-                    // Jika Lunas tapi tidak ada spesifikasi (Lama), abaikan di hitungan terpisah agar balance pas
                 });
 
-                // Update UI Global
                 document.getElementById('tot-gross').innerText = APP.formatRp(totGross);
                 document.getElementById('tot-cash').innerText = APP.formatRp(totCash);
                 document.getElementById('tot-transfer').innerText = APP.formatRp(totTransfer);
 
-                // Update UI Cabang
                 let html = '';
                 const allowedBranches = session.role === 'manager' ? ['Banda', 'Sabang', 'Aceh Timur'] : [session.branch === 'Banda Aceh' ? 'Banda' : session.branch];
 
@@ -238,7 +265,8 @@
                         <h3 class="bg-black text-white text-center py-3 font-black uppercase tracking-widest text-sm">${b === 'Banda' ? 'BANDA ACEH' : b}</h3>
                         <div class="p-4 space-y-3 bg-gray-50">
                             
-                            <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm">
+                            <!-- KARTU CASH BISA DIKLIK -->
+                            <div onclick="APP.showDetails('${b}', 'cash')" class="cursor-pointer hover:bg-green-50 transition-colors flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm active:translate-y-1">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xl">💵</span>
                                     <div><p class="text-[10px] font-bold text-gray-500 uppercase">Setoran Cash</p><p class="text-xs font-black text-gray-800">${d.trx_cash} Trx</p></div>
@@ -246,7 +274,8 @@
                                 <p class="text-lg font-black text-green-600 font-num">${APP.formatRp(d.cash)}</p>
                             </div>
                             
-                            <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm">
+                            <!-- KARTU TRANSFER BISA DIKLIK -->
+                            <div onclick="APP.showDetails('${b}', 'transfer')" class="cursor-pointer hover:bg-blue-50 transition-colors flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm active:translate-y-1">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xl">📱</span>
                                     <div><p class="text-[10px] font-bold text-gray-500 uppercase">Bank Transfer</p><p class="text-xs font-black text-gray-800">${d.trx_transfer} Trx</p></div>
@@ -262,6 +291,77 @@
                     </div>`;
                 });
                 document.getElementById('branch-container').innerHTML = html;
+            },
+
+            // FITUR BARU: SHOW DETAILS TRANSAKSI
+            showDetails: (branch, method) => {
+                const logs = STATE.branchData[branch][`logs_${method}`];
+                const title = method === 'cash' ? 'SETORAN CASH (FISIK)' : 'MUTASI TRANSFER';
+                
+                document.getElementById('detail-title').innerText = title;
+                document.getElementById('detail-subtitle').innerText = branch === 'Banda' ? 'CABANG BANDA ACEH' : `CABANG ${branch.toUpperCase()}`;
+
+                const contentEl = document.getElementById('detail-content');
+
+                if (!logs || logs.length === 0) {
+                    contentEl.innerHTML = '<div class="text-center py-10"><span class="text-4xl opacity-50 mb-2 block">📭</span><p class="text-gray-500 font-bold text-sm uppercase">Tidak ada transaksi</p></div>';
+                    document.getElementById('modal-details').classList.remove('hidden');
+                    return;
+                }
+
+                // Kelompokkan berdasarkan tanggal (Group by Date)
+                const grouped = {};
+                logs.forEach(l => {
+                    if (!grouped[l.date_only]) grouped[l.date_only] = [];
+                    grouped[l.date_only].push(l);
+                });
+
+                // Urutkan tanggal dari yang paling baru (Descending)
+                const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+                let html = '';
+                const textColorClass = method === 'cash' ? 'text-green-600' : 'text-blue-600';
+                
+                sortedDates.forEach(date => {
+                    let dailyTotal = 0;
+                    
+                    // Render row tiap transaksi di hari itu
+                    let rowsHtml = grouped[date].map((l, index) => {
+                        dailyTotal += l.final_val;
+                        const isLast = index === grouped[date].length - 1;
+                        const borderClass = isLast ? '' : 'border-b border-dashed border-gray-300';
+                        
+                        return `
+                            <div class="flex justify-between items-center py-2.5 ${borderClass}">
+                                <div class="flex-1 pr-2 overflow-hidden">
+                                    <p class="text-xs font-black uppercase text-gray-800 truncate">${l.nama_pelanggan_arena || 'Anonim'}</p>
+                                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">U${String(l.unit_arena).replace(/\D/g, '')} • ${l.paket_arena}</p>
+                                </div>
+                                <p class="text-sm font-black ${textColorClass} font-num shrink-0">${APP.formatRp(l.final_val)}</p>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // Bungkus ke dalam Card per Hari
+                    html += `
+                        <div class="bg-white border-2 border-black rounded-xl p-3 shadow-[2px_2px_0px_#000]">
+                            <div class="bg-gray-200 -mx-3 -mt-3 p-2 px-3 border-b-2 border-black rounded-t-[10px] flex justify-between items-center mb-1">
+                                <span class="font-black text-[10px] uppercase text-gray-700 tracking-wider">📅 ${date}</span>
+                                <span class="font-black text-[10px] bg-black text-white px-2 py-1 rounded shadow-sm">Total: ${APP.formatRp(dailyTotal)}</span>
+                            </div>
+                            <div class="px-1">
+                                ${rowsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                contentEl.innerHTML = html;
+                document.getElementById('modal-details').classList.remove('hidden');
+            },
+
+            closeDetails: () => {
+                document.getElementById('modal-details').classList.add('hidden');
             },
 
             printReport: () => {
