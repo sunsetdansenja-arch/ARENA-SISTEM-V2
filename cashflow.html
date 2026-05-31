@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARENA SYSTEM - Cash Flow Tracker</title>
+    
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; text-decoration: none; }
+        .mario-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
+        
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .font-num { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
+
+        /* Print Optimization */
+        @media print { 
+            body * { visibility: hidden; } 
+            body { background: white; margin: 0; padding: 0; }
+            #print-area, #print-area * { visibility: visible; } 
+            #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+            @page { size: A4 portrait; margin: 15mm; }
+            table { page-break-inside: auto; width: 100%; border-collapse: collapse; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="pb-10">
+
+    <script>
+        const session = JSON.parse(localStorage.getItem('arena_session_v6'));
+        if (!session || (session.role !== 'manager' && session.role !== 'admin')) { 
+            window.location.href = 'index.html'; 
+        }
+    </script>
+
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-xl font-black text-white mt-4 uppercase tracking-widest">Sinkronisasi Kasir...</h2>
+    </div>
+
+    <!-- HEADER -->
+    <header class="w-full bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400 no-print">
+        <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+            <button onclick="APP.goBack()" class="mario-btn bg-white text-black px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-black shadow-[2px_2px_0px_#FFD700]">◀ KEMBALI</button>
+            <div class="text-right flex items-center gap-3">
+                <div>
+                    <h1 class="text-lg md:text-xl font-black text-white leading-none">CASH FLOW TRACKER</h1>
+                    <p id="user-info-text" class="text-[9px] md:text-xs font-bold text-yellow-400 uppercase tracking-widest mt-1">ARENA SYSTEM</p>
+                </div>
+                <button onclick="APP.printReport()" class="mario-btn bg-[#25D366] text-white px-3 py-2 text-xs md:text-sm font-black border-2 border-white shadow-[2px_2px_0px_#fff]">🖨️ CETAK</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="w-full max-w-5xl mx-auto p-4 md:p-6 animate-pop no-print">
+        
+        <!-- FILTER SECTION -->
+        <div class="mario-card p-5 bg-white mb-6 border-4 border-black">
+            <h2 class="text-sm font-black uppercase text-gray-700 mb-3 border-b-2 border-dashed border-gray-300 pb-2">Filter Data Kasir</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Dari Tanggal</label>
+                    <input type="date" id="filter-start" class="mario-input p-2 text-sm" onchange="APP.calculate()">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Sampai Tanggal</label>
+                    <input type="date" id="filter-end" class="mario-input p-2 text-sm" onchange="APP.calculate()">
+                </div>
+                <div class="flex items-end gap-2">
+                    <button onclick="APP.setToday()" class="mario-btn bg-black text-white flex-1 p-2 text-xs font-black">HARI INI</button>
+                    <button onclick="APP.setThisMonth()" class="mario-btn bg-gray-200 text-black flex-1 p-2 text-xs font-black border-gray-400">BULAN INI</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GLOBAL SUMMARY CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="mario-card p-5 bg-black text-white border-4 border-yellow-400 text-center shadow-[4px_4px_0px_#000]">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Pemasukan Valid</p>
+                <p id="tot-gross" class="text-3xl font-black text-yellow-400 font-num mt-1">Rp 0</p>
+            </div>
+            <div class="mario-card p-5 bg-green-50 border-4 border-green-600 text-center shadow-[4px_4px_0px_#16a34a]">
+                <div class="text-2xl mb-1">💵</div>
+                <p class="text-[10px] font-bold text-green-700 uppercase tracking-widest">Uang Fisik (Cash)</p>
+                <p id="tot-cash" class="text-2xl font-black text-green-700 font-num mt-1">Rp 0</p>
+            </div>
+            <div class="mario-card p-5 bg-blue-50 border-4 border-blue-600 text-center shadow-[4px_4px_0px_#2563eb]">
+                <div class="text-2xl mb-1">📱</div>
+                <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Uang Digital (Transfer)</p>
+                <p id="tot-transfer" class="text-2xl font-black text-blue-700 font-num mt-1">Rp 0</p>
+            </div>
+        </div>
+
+        <!-- BRANCH BREAKDOWN -->
+        <h2 class="text-lg font-black uppercase text-black mb-3 border-l-4 border-black pl-2">Rincian Kasir Per Daerah</h2>
+        <div id="branch-container" class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+            <!-- Dirender via JS -->
+        </div>
+
+    </main>
+
+    <!-- PRINT TEMPLATE (Hidden from UI, visible on print) -->
+    <div id="print-area" class="hidden p-6"></div>
+
+    <script>
+        const CONFIG = { WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1" };
+        const STATE = { logs: [], branchData: {} };
+
+        const APP = {
+            init: () => {
+                document.getElementById('user-info-text').innerText = `ADMIN: ${session.username.toUpperCase()}`;
+                APP.setThisMonth(); // Default filter
+                APP.loadData();
+            },
+            
+            goBack: () => {
+                if (session.role === 'manager') window.location.href = 'financial.html';
+                else window.location.href = 'admin.html';
+            },
+
+            formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0),
+            
+            setToday: () => {
+                const today = new Date(); today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+                const dStr = today.toISOString().split('T')[0];
+                document.getElementById('filter-start').value = dStr;
+                document.getElementById('filter-end').value = dStr;
+                APP.calculate();
+            },
+            
+            setThisMonth: () => {
+                const date = new Date(); date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const lastDay = new Date(y, date.getMonth() + 1, 0).getDate();
+                
+                document.getElementById('filter-start').value = `${y}-${m}-01`;
+                document.getElementById('filter-end').value = `${y}-${m}-${lastDay}`;
+                if(STATE.logs.length > 0) APP.calculate();
+            },
+
+            api: async (p) => {
+                try {
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
+                    const txt = await r.text(); return txt ? JSON.parse(txt) : [];
+                } catch (e) { return []; }
+            },
+
+            loadData: async () => {
+                document.getElementById('loader').classList.remove('hidden');
+                
+                // Ambil data (Bila admin hanya tarik cabangnya, bila manager tarik semua)
+                const fetchRole = session.role === 'manager' ? 'admin' : session.role;
+                const fetchBranch = session.role === 'manager' ? 'ALL' : session.branch;
+                
+                const res = await APP.api({ action: 'get_dashboard', role: fetchRole, branch: fetchBranch });
+                document.getElementById('loader').classList.add('hidden');
+
+                STATE.logs = Array.isArray(res) ? res.map(i => i.json || i).filter(i => i.tagihan_arena !== undefined) : [];
+                APP.calculate();
+            },
+
+            calculate: () => {
+                const startStr = document.getElementById('filter-start').value;
+                const endStr = document.getElementById('filter-end').value;
+                
+                let totGross = 0; let totCash = 0; let totTransfer = 0;
+                
+                STATE.branchData = {
+                    'Banda': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 },
+                    'Sabang': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 },
+                    'Aceh Timur': { cash: 0, transfer: 0, trx_cash: 0, trx_transfer: 0 }
+                };
+
+                STATE.logs.forEach(l => {
+                    const stat = String(l.status_unit_arena).toLowerCase();
+                    if (['batal', 'pending', 'maintenance'].includes(stat)) return;
+
+                    let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    let dOnly = safeDate.substring(0, 10);
+                    
+                    // Filter Rentang Tanggal
+                    if (startStr && dOnly < startStr) return;
+                    if (endStr && dOnly > endStr) return;
+
+                    const payMethod = String(l.pembayaran || '').toLowerCase();
+                    const val = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
+                    const bRaw = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
+                    const b = STATE.branchData[bRaw] ? bRaw : 'Banda';
+
+                    // Deteksi metode bayar
+                    if (payMethod.includes('cash')) {
+                        totCash += val;
+                        totGross += val;
+                        STATE.branchData[b].cash += val;
+                        STATE.branchData[b].trx_cash++;
+                    } else if (payMethod.includes('transfer')) {
+                        totTransfer += val;
+                        totGross += val;
+                        STATE.branchData[b].transfer += val;
+                        STATE.branchData[b].trx_transfer++;
+                    }
+                    // Jika Lunas tapi tidak ada spesifikasi (Lama), abaikan di hitungan terpisah agar balance pas
+                });
+
+                // Update UI Global
+                document.getElementById('tot-gross').innerText = APP.formatRp(totGross);
+                document.getElementById('tot-cash').innerText = APP.formatRp(totCash);
+                document.getElementById('tot-transfer').innerText = APP.formatRp(totTransfer);
+
+                // Update UI Cabang
+                let html = '';
+                const allowedBranches = session.role === 'manager' ? ['Banda', 'Sabang', 'Aceh Timur'] : [session.branch === 'Banda Aceh' ? 'Banda' : session.branch];
+
+                allowedBranches.forEach(b => {
+                    let d = STATE.branchData[b];
+                    let totalBranch = d.cash + d.transfer;
+                    
+                    html += `
+                    <div class="mario-card p-0 border-2 border-black overflow-hidden shadow-[4px_4px_0px_#000]">
+                        <h3 class="bg-black text-white text-center py-3 font-black uppercase tracking-widest text-sm">${b === 'Banda' ? 'BANDA ACEH' : b}</h3>
+                        <div class="p-4 space-y-3 bg-gray-50">
+                            
+                            <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">💵</span>
+                                    <div><p class="text-[10px] font-bold text-gray-500 uppercase">Setoran Cash</p><p class="text-xs font-black text-gray-800">${d.trx_cash} Trx</p></div>
+                                </div>
+                                <p class="text-lg font-black text-green-600 font-num">${APP.formatRp(d.cash)}</p>
+                            </div>
+                            
+                            <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-300 shadow-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">📱</span>
+                                    <div><p class="text-[10px] font-bold text-gray-500 uppercase">Bank Transfer</p><p class="text-xs font-black text-gray-800">${d.trx_transfer} Trx</p></div>
+                                </div>
+                                <p class="text-lg font-black text-blue-600 font-num">${APP.formatRp(d.transfer)}</p>
+                            </div>
+
+                        </div>
+                        <div class="bg-yellow-100 p-3 border-t-2 border-dashed border-gray-300 flex justify-between items-center">
+                            <span class="text-[10px] font-black uppercase text-yellow-800">Total Tervalidasi</span>
+                            <span class="text-base font-black text-black font-num">${APP.formatRp(totalBranch)}</span>
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('branch-container').innerHTML = html;
+            },
+
+            printReport: () => {
+                const startStr = document.getElementById('filter-start').value;
+                const endStr = document.getElementById('filter-end').value;
+                const printDate = new Date().toLocaleString('id-ID');
+                
+                let printHtml = `
+                <div style="font-family: Arial, sans-serif; color: #000; padding: 0;">
+                    <div style="text-align:center; margin-bottom:20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                        <h1 style="font-size:22px; margin:0; text-transform:uppercase; font-weight:900;">ARENA PLAYBOX</h1>
+                        <h2 style="font-size:14px; margin:5px 0 0 0; color:#4b5563;">LAPORAN REKONSILIASI KASIR (CASHFLOW)</h2>
+                    </div>
+                    
+                    <table style="width: 100%; margin-bottom: 20px; font-size: 12px;">
+                        <tr>
+                            <td style="width: 50%;"><strong>Periode:</strong> ${startStr} s/d ${endStr}</td>
+                            <td style="text-align: right;"><strong>Dicetak Oleh:</strong> ${session.username.toUpperCase()}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Waktu Cetak:</strong> ${printDate}</td>
+                            <td style="text-align: right;"><strong>Cabang Akses:</strong> ${session.role === 'manager' ? 'GLOBAL' : session.branch.toUpperCase()}</td>
+                        </tr>
+                    </table>
+
+                    <h3 style="font-size: 14px; text-transform: uppercase; background: #000; color: #fff; padding: 8px; text-align: center;">RINGKASAN GLOBAL</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; width: 33%; text-align: center;">
+                                <strong>TOTAL FISIK (CASH)</strong><br>
+                                <span style="font-size: 18px; color: green; font-weight: bold;">${document.getElementById('tot-cash').innerText}</span>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 8px; width: 33%; text-align: center;">
+                                <strong>TOTAL MUTASI (TRANSFER)</strong><br>
+                                <span style="font-size: 18px; color: blue; font-weight: bold;">${document.getElementById('tot-transfer').innerText}</span>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 8px; width: 33%; text-align: center; background: #ffffcc;">
+                                <strong>TOTAL KESELURUHAN</strong><br>
+                                <span style="font-size: 18px; font-weight: bold;">${document.getElementById('tot-gross').innerText}</span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h3 style="font-size: 14px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 4px;">RINCIAN PER DAERAH</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 40px;">
+                        <tr style="background: #e5e7eb;">
+                            <th style="border: 1px solid #000; padding: 8px; text-align: left;">Cabang</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: right;">Setoran Cash (Fisik)</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: right;">Transfer (Mutasi)</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: right;">Sub-Total</th>
+                        </tr>`;
+
+                const allowedBranches = session.role === 'manager' ? ['Banda', 'Sabang', 'Aceh Timur'] : [session.branch === 'Banda Aceh' ? 'Banda' : session.branch];
+                
+                allowedBranches.forEach(b => {
+                    let d = STATE.branchData[b];
+                    let totalBranch = d.cash + d.transfer;
+                    printHtml += `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">${b === 'Banda' ? 'BANDA ACEH' : b.toUpperCase()}</td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: right;">${APP.formatRp(d.cash)} <br><span style="font-size: 9px; color: #666;">(${d.trx_cash} Trx)</span></td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: right;">${APP.formatRp(d.transfer)} <br><span style="font-size: 9px; color: #666;">(${d.trx_transfer} Trx)</span></td>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold; background: #fafafa;">${APP.formatRp(totalBranch)}</td>
+                        </tr>`;
+                });
+
+                printHtml += `
+                    </table>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:12px;">
+                        <div style="text-align:center; width:200px;">
+                            <p style="margin-bottom:60px;">Disiapkan Oleh,</p>
+                            <p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">${session.username.toUpperCase()}</p>
+                            <p style="margin:0;">Kasir / Admin</p>
+                        </div>
+                        <div style="text-align:center; width:200px;">
+                            <p style="margin-bottom:60px;">Diperiksa Oleh,</p>
+                            <p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">...................................</p>
+                            <p style="margin:0;">Manager / Finance</p>
+                        </div>
+                    </div>
+                </div>`;
+
+                document.getElementById('print-area').innerHTML = printHtml; 
+                document.getElementById('print-area').classList.remove('hidden'); 
+                window.print(); 
+                document.getElementById('print-area').classList.add('hidden');
+            }
+        };
+
+        window.onload = APP.init;
+    </script>
+</body>
+</html>
