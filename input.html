@@ -86,7 +86,7 @@
             },
             UNITS: [ 
                 { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
-                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 6, label: 'BANDA' }, 
                 { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
             ]
         };
@@ -226,14 +226,24 @@
             },
             
             updateUnitOptions: () => {
-                const branch = document.getElementById('r-branch').value; 
+                const branchVal = document.getElementById('r-branch').value; 
                 const logistikBox = document.getElementById('logistik-admin-container');
                 if(!document.getElementById('r-unit')) return;
                 
-                if (branch === 'Banda') { logistikBox.classList.remove('hidden'); } 
+                if (branchVal === 'Banda') { logistikBox.classList.remove('hidden'); } 
                 else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
 
-                document.getElementById('r-unit').innerHTML = CONFIG.UNITS.filter(u => u.label.includes(branch.toUpperCase().substring(0,4))).map(u => {
+                // PERBAIKAN LOGIKA CABANG ACEH TIMUR (ATIM) & KONSISTENSI
+                let branchStr = String(branchVal).toUpperCase();
+                if (branchStr.includes('TIMUR') || branchStr === 'ATIM') {
+                    branchStr = 'ATIM';
+                } else if (branchStr.includes('BANDA')) {
+                    branchStr = 'BANDA';
+                } else {
+                    branchStr = 'SABANG';
+                }
+
+                document.getElementById('r-unit').innerHTML = CONFIG.UNITS.filter(u => u.label === branchStr).map(u => {
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id}`;
