@@ -144,7 +144,7 @@
                     <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
                         <div>
                             <h2 class="text-base font-black text-blue-400 uppercase tracking-wide flex items-center gap-2"><span class="text-xl">🎉</span> CUSTOMER BARU</h2>
-                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Akuisisi pertama kali bulan ini</p>
+                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Akuisisi perdana di bulan ini</p>
                         </div>
                         <div class="flex flex-col items-end gap-1 text-right">
                             <span id="count-new" class="bg-blue-600 text-white font-bold px-2 py-0.5 rounded shadow-sm text-[10px] tracking-wider border border-blue-400">0 Orang</span>
@@ -170,7 +170,7 @@
                     <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
                         <div>
                             <h2 class="text-base font-black text-green-400 uppercase tracking-wide flex items-center gap-2"><span class="text-xl">🔥</span> PELANGGAN SETIA</h2>
-                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Repeat order (Join bulan sebelumnya)</p>
+                            <p class="text-[10px] text-gray-500 mt-1 font-bold">Repeat order (Pernah main sblmnya)</p>
                         </div>
                         <div class="flex flex-col items-end gap-1 text-right">
                             <span id="count-returning" class="bg-green-600 text-white font-bold px-2 py-0.5 rounded shadow-sm text-[10px] tracking-wider border border-green-400">0 Orang</span>
@@ -430,7 +430,7 @@
             },
 
             // ======================================
-            // TAB 3: CRM 
+            // TAB 3: CRM (New vs Returning)
             // ======================================
             renderCRM: () => {
                 const month = document.getElementById('month-filter').value;
@@ -438,62 +438,87 @@
                 
                 let customerHistory = {}; 
 
-                // 1. Rekam histori SEMUA transaksi
+                // 1. Pindai seluruh riwayat data untuk menetapkan tanggal pertama kali muncul
                 STATE.logs.forEach(l => {
                     const s = String(l.status_unit_arena || '').toLowerCase(); 
+                    
+                    // Abaikan transaksi batal/pending untuk perhitungan riwayat kehadiran
                     if(['batal','pending','maintenance'].includes(s)) return;
                     
                     let rawNum = String(l.nomor_pelanggan_arena || '').replace(/\D/g, '');
                     if (!rawNum) return;
+                    
+                    // Standarisasi nomor, pastikan selalu berawalan 62 untuk menghindari data ganda
                     let phone = rawNum.replace(/^0/, '62');
 
-                    const d = String(l.jam_mulai_sewa || l.createdAt || '').substring(0,10);
+                    const safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
+                    const d = safeDate.substring(0,10);
                     if(!d || d.length < 7) return; 
-                    const mStr = d.substring(0,7);
+                    const mStr = d.substring(0,7); // Format: YYYY-MM
                     
                     let tagihan = (Number(l.tagihan_arena)||0) + (Number(l.ongkir||l.ongkir_arena)||0);
-                    let rawBranch = String(l.cabang_arena || 'Banda');
-                    let branch = (rawBranch.toLowerCase().includes('banda')) ? 'Banda' : (rawBranch.toLowerCase().includes('sabang') ? 'Sabang' : 'Aceh Timur');
-                    let name = l.nama_pelanggan_arena || 'Sultan';
+                    let rawBranch = String(l.cabang_arena || 'Banda').toLowerCase();
+                    let branch = rawBranch.includes('banda') ? 'Banda' : (rawBranch.includes('sabang') ? 'Sabang' : 'Aceh Timur');
+                    let name = l.nama_pelanggan_arena || 'Anonim';
 
+                    // Rekam jejak kemunculan
                     if (!customerHistory[phone]) {
-                        customerHistory[phone] = { firstAppearance: mStr, name: name, branch: branch, spentSelectedMonth: 0, trxCountSelectedMonth: 0 };
+                        customerHistory[phone] = { 
+                            firstAppearance: mStr, 
+                            name: name, 
+                            branch: branch, 
+                            spentSelectedMonth: 0, 
+                            trxCountSelectedMonth: 0 
+                        };
                     } else {
-                        if (mStr < customerHistory[phone].firstAppearance) customerHistory[phone].firstAppearance = mStr;
+                        // Jika ditemukan transaksi lebih lama, timpa firstAppearance-nya
+                        if (mStr < customerHistory[phone].firstAppearance) {
+                            customerHistory[phone].firstAppearance = mStr;
+                        }
                     }
 
+                    // Hanya kalkulasi uang dan jumlah pesanan jika terjadi di bulan filter
                     if (mStr === month) {
                         customerHistory[phone].spentSelectedMonth += tagihan;
                         customerHistory[phone].trxCountSelectedMonth += 1;
-                        if (name && name !== '?') customerHistory[phone].name = name;
-                        customerHistory[phone].branch = branch;
+                        if (name && name !== '?' && name !== 'Anonim') customerHistory[phone].name = name; 
+                        customerHistory[phone].branch = branch; 
                     }
                 });
 
-                // 2. Pisahkan New vs Returning
-                let newCustList = []; let retCustList = [];
+                // 2. Pisahkan New vs Returning secara absolut
+                let newCustList = []; 
+                let retCustList = [];
+                
                 Object.keys(customerHistory).forEach(phone => {
                     const c = customerHistory[phone];
+                    
+                    // Filter: Hanya yang menyewa di bulan terpilih yang akan ditampilkan
                     if (c.trxCountSelectedMonth > 0) {
-                        if (c.firstAppearance === month) newCustList.push(c);
-                        else if (c.firstAppearance < month) retCustList.push(c);
+                        
+                        // CUSTOMER BARU: Tanggal perdana dia bermain adalah bulan ini (tidak pernah ada log di bulan sblmnya)
+                        if (c.firstAppearance === month) {
+                            newCustList.push(c);
+                        } 
+                        // PELANGGAN SETIA: Pernah main di bulan-bulan sebelum bulan yang difilter
+                        else if (c.firstAppearance < month) {
+                            retCustList.push(c);
+                        }
                     }
                 });
 
                 newCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
                 retCustList.sort((a,b) => b.spentSelectedMonth - a.spentSelectedMonth);
 
-                // 3. Kalkulasi Total Rp
+                // 3. Update UI dan DOM
                 let totalNewRp = newCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
                 let totalRetRp = retCustList.reduce((sum, c) => sum + c.spentSelectedMonth, 0);
 
-                // Update UI Counters
                 document.getElementById('count-new').innerText = newCustList.length + ' Orang';
                 document.getElementById('count-returning').innerText = retCustList.length + ' Orang';
                 document.getElementById('total-new-rp').innerText = GOD.formatRp(totalNewRp);
                 document.getElementById('total-returning-rp').innerText = GOD.formatRp(totalRetRp);
 
-                // Setup Colors for Badges
                 const badgeColor = {
                     'Banda': 'bg-blue-900/30 text-blue-400 border-blue-800',
                     'Sabang': 'bg-purple-900/30 text-purple-400 border-purple-800',
