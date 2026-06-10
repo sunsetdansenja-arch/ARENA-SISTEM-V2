@@ -105,7 +105,7 @@
             <h2 class="text-lg font-black border-b-2 border-gray-600 pb-3 mb-5 text-yellow-400 uppercase flex items-center gap-2">
                 <span class="text-2xl">🛠️</span> UNIT CONTROL
             </h2>
-            <p class="text-xs text-gray-400 font-bold mb-6 bg-[#111] p-3 rounded-lg border border-gray-700">⚠️ Gunakan menu ini HANYA untuk mematikan paksa (Maintenance) unit jika terjadi kerusakan alat atau perbaikan darurat.</p>
+            <p class="text-xs text-gray-400 font-bold mb-6 bg-[#111] p-3 rounded-lg border border-gray-700">⚠️ Gunakan menu ini untuk mematikan paksa (Maintenance) unit jika terjadi kerusakan alat atau perbaikan darurat.</p>
             <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
@@ -199,7 +199,6 @@
     <script>
         const CONFIG = {
             WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1",
-            // SINKRONISASI 1: Tambahkan Unit 6 di GOD MODE
             UNITS: [ 
                 { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
                 { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 6, label: 'BANDA' }, 
@@ -325,13 +324,15 @@
                     if (isM) { statusColor = 'text-red-500'; statusDot = '🔴'; }
                     else if (isB) { statusColor = 'text-orange-400'; statusDot = '🟠'; }
 
+                    // Hapus kondisi 'disabled' pada button sehingga tetap bisa ditekan meskipun berstatus playing/booked.
+                    // Parameter ke-4 ditambahkan pada fungsi toggleMaintenance untuk melewatkan status asli agar bisa ditampilkan di konfirmasi.
                     mHtml += `
                         <div class="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-700 hover:border-gray-500 transition-colors">
                             <div>
                                 <p class="font-black text-sm uppercase text-gray-200">U${u.id} <span class="bg-gray-800 text-gray-400 border border-gray-600 text-[9px] ml-2 px-2 py-0.5 rounded font-bold">${u.label}</span></p>
                                 <p class="text-[10px] font-bold mt-1.5 ${statusColor} tracking-widest">${statusDot} ${s.toUpperCase()}</p>
                             </div>
-                            <button onclick="GOD.toggleMaintenance(${u.id}, '${u.label}', ${!isM})" ${isB?'disabled':''} class="mario-btn p-3 text-[10px] font-black w-28 shadow-sm ${isM?'bg-green-400 text-black border-green-600':'bg-red-600 text-white border-red-800'}">
+                            <button onclick="GOD.toggleMaintenance(${u.id}, '${u.label}', ${!isM}, '${s}')" class="mario-btn p-3 text-[10px] font-black w-28 shadow-sm ${isM?'bg-green-400 text-black border-green-600':'bg-red-600 text-white border-red-800'}">
                                 ${isM?'NORMALKAN':'SET MAINT'}
                             </button>
                         </div>`;
@@ -339,13 +340,19 @@
                 document.getElementById('unit-list-container').innerHTML = mHtml;
             },
 
-            toggleMaintenance: async (id, branch, set) => {
-                const act = set ? 'KUNCI unit ini untuk MAINTENANCE' : 'KEMBALIKAN unit menjadi NORMAL';
+            toggleMaintenance: async (id, branch, set, currentStatus) => {
+                const isTerisi = ['playing','main','booked','pending'].includes(currentStatus);
+                let act = set ? 'KUNCI unit ini untuk MAINTENANCE' : 'KEMBALIKAN unit menjadi NORMAL';
+                
+                // Tambahkan peringatan yang lebih kuat jika memaksa kunci unit yang sedang terisi
+                if (set && isTerisi) {
+                    act = `PAKSA KUNCI unit yang sedang TERISI (${currentStatus.toUpperCase()}) untuk MAINTENANCE`;
+                }
+
                 if(!confirm(`Yakin ingin ${act}?`)) return;
                 
                 GOD.showLoader('MENGIRIM PERINTAH...');
                 
-                // SINKRONISASI 2: Cocokkan string `pb` yang dikirim ke API agar dikenali oleh logs.html
                 let pb = 'Banda Aceh'; // Default
                 if (branch === 'SABANG') pb = 'Sabang';
                 if (branch === 'ATIM') pb = 'Aceh Timur';
