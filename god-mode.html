@@ -106,7 +106,7 @@
                 <span class="text-2xl">🛠️</span> UNIT CONTROL
             </h2>
             <p class="text-xs text-gray-400 font-bold mb-6 bg-[#111] p-3 rounded-lg border border-gray-700">⚠️ Gunakan menu ini HANYA untuk mematikan paksa (Maintenance) unit jika terjadi kerusakan alat atau perbaikan darurat.</p>
-            <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
         <!-- VIEW: ANALYTICS -->
@@ -199,7 +199,12 @@
     <script>
         const CONFIG = {
             WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1",
-            UNITS: [ { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } ],
+            // SINKRONISASI 1: Tambahkan Unit 6 di GOD MODE
+            UNITS: [ 
+                { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
+                { id: 3, label: 'BANDA' }, { id: 4, label: 'BANDA' }, { id: 5, label: 'BANDA' }, { id: 6, label: 'BANDA' }, 
+                { id: 8, label: 'ATIM' }, { id: 9, label: 'ATIM' } 
+            ],
             TARGET_HARIAN: 400000
         };
 
@@ -339,7 +344,11 @@
                 if(!confirm(`Yakin ingin ${act}?`)) return;
                 
                 GOD.showLoader('MENGIRIM PERINTAH...');
-                let pb = branch === 'BANDA' ? 'Banda' : (branch === 'SABANG' ? 'Sabang' : 'Aceh Timur');
+                
+                // SINKRONISASI 2: Cocokkan string `pb` yang dikirim ke API agar dikenali oleh logs.html
+                let pb = 'Banda Aceh'; // Default
+                if (branch === 'SABANG') pb = 'Sabang';
+                if (branch === 'ATIM') pb = 'Aceh Timur';
                 
                 await GOD.api({ 
                     action: 'input_rental', name:'SYSTEM', wa:'0', branch: pb, unit: id, price: 0, 
