@@ -37,7 +37,7 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
     </style>
 </head>
-<body class="pb-6">
+<body class="pb-24 md:pb-6">
 
     <script>
         const session = JSON.parse(localStorage.getItem('arena_session_v6'));
@@ -73,6 +73,25 @@
         <div id="main-content" class="w-full mx-auto space-y-6"></div>
     </main>
 
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-container md:hidden" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 4px solid black; z-index: 50;">
+        <nav class="flex justify-around items-center w-full" style="padding: 10px 0;">
+            <div onclick="APP.goBack()" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">🏠</span>HOME
+            </div>
+            <div onclick="window.location.href='logs.html'" style="text-align: center; cursor: pointer; color: var(--mario-orange); font-weight: bold; font-size: 10px; text-shadow: 1px 1px 0px black; flex: 1;">
+                <span class="text-xl block mb-1">🎮</span>LOGS
+            </div>
+            <div onclick="window.location.href='input.html'" style="text-align: center; cursor: pointer; color: gray; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">📝</span>INPUT
+            </div>
+            <div onclick="window.location.href='wamirror.html'" style="text-align: center; cursor: pointer; color: #25D366; font-weight: bold; font-size: 10px; flex: 1;">
+                <span class="text-xl block mb-1">💬</span>MIRROR
+            </div>
+        </nav>
+    </div>
+
+    <!-- MODALS -->
     <div id="modal-acc" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2><div class="space-y-3 text-left"><label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label><select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button><button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button></div></div></div></div>
     <div id="modal-cancel" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm"><h2 class="text-xl font-black mb-4 text-center border-b-2 border-black pb-2 text-red-600 uppercase">Batalkan Pesanan ❌</h2><div class="space-y-3"><label class="text-xs font-bold block">Pilih Alasan Batal:</label><select id="cancel-reason" class="mario-input p-2 text-sm" onchange="APP.toggleCancelOther()"><option value="Telat Respon">Telat Respon (Customer Hilang)</option><option value="Unit Full">Unit Full / Habis</option><option value="Request Customer">Permintaan Customer (Ganti Jadwal dll)</option><option value="Lainnya">Lainnya (Ketik Manual)</option></select><input type="text" id="cancel-other" class="mario-input p-2 text-sm hidden mt-2" placeholder="Ketik alasan spesifik..."><div class="flex gap-2 mt-4"><button onclick="APP.closeModal('modal-cancel')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Kembali</button><button onclick="APP.confirmCancel()" class="mario-btn bg-red-600 text-white p-3 flex-1 text-sm border-red-800">Batalkan</button></div></div></div></div>
     <div id="modal-payment" class="modal-overlay hidden"><div class="mario-card p-6 w-full max-w-sm text-center"><h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pembayaran 💰</h2><p class="text-xs font-bold text-gray-600 mb-4">Pilih metode lunas customer:</p><div class="grid grid-cols-2 gap-3 mb-4"><button onclick="APP.confirmPayment('Cash')" class="mario-btn bg-green-400 text-black p-4 text-sm border-green-700 hover:bg-green-500">💵 CASH</button><button onclick="APP.confirmPayment('Transfer')" class="mario-btn bg-blue-500 text-white p-4 text-sm border-blue-800 hover:bg-blue-600">📱 TRANSFER</button></div><button onclick="APP.closeModal('modal-payment')" class="w-full text-xs font-bold text-gray-500 underline mt-2">Batal, Nanti Saja</button></div></div>
@@ -120,7 +139,7 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI DATA...');
-                // Pastikan selalu ambil ALL branch agar tampilan dan data admin/manager persis sama
+                // Pastikan selalu ambil ALL branch agar tampilan dan data admin/manager persis sama untuk global unit status
                 const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
                 APP.hideLoader();
                 
@@ -136,9 +155,14 @@
                 return logs.length > 0 ? String(logs[0].status_unit_arena).toLowerCase() : 'kosong';
             },
 
+            // BUG FIX 1: Penyesuaian nama branch agar sinkron dengan konfigurasi input.html
             generateUnitOptionsHtml: (branch, dateStr) => {
-                const branchStr = String(branch || '').toUpperCase().substring(0,4);
-                return CONFIG.UNITS.filter(u => u.label.includes(branchStr)).map(u => {
+                let branchStr = String(branch || '').toUpperCase();
+                if (branchStr.includes('TIMUR') || branchStr === 'ATIM') branchStr = 'ATIM';
+                else if (branchStr.includes('BANDA')) branchStr = 'BANDA';
+                else branchStr = 'SABANG';
+
+                return CONFIG.UNITS.filter(u => u.label === branchStr).map(u => {
                     const stat = APP.getUnitStatusRaw(u.id);
                     if (stat === 'maintenance') return '';
                     let label = `Unit ${u.id} ` + (['playing','main','booked','pending'].includes(stat) ? '🔴 (Terisi)' : '🟢 (Kosong)');
@@ -179,8 +203,7 @@
                     </div>`;
                 }
 
-                // Tampilkan semua 8 Unit tanpa difilter berdasarkan role
-                let uHtml = '<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 mb-4">';
+                let uHtml = '<div class="grid grid-cols-4 lg:grid-cols-8 gap-3 mb-4">';
                 CONFIG.UNITS.forEach(u => {
                     const s = APP.getUnitStatusRaw(u.id); 
                     let bg = 'bg-green-500 text-white border-green-700'; let txt = 'KOSONG';
@@ -197,15 +220,23 @@
                 });
                 uHtml += '</div>';
 
-                // Tampilkan Filter Dropdown untuk semua role, pre-selected ke cabang masing-masing jika ada
-                let b = STATE.user.branch || 'ALL';
-                let isBanda = b.includes('Banda') ? 'selected' : '';
-                let isSabang = b.includes('Sabang') ? 'selected' : '';
-                let isAtim = (b.includes('Timur') || b.includes('Atim')) ? 'selected' : '';
+                // BUG FIX 2: Default filter berdasarkan Cabang (Admin)
+                let b = 'ALL';
+                if (STATE.user.role === 'admin') {
+                    let uBranch = String(STATE.user.branch || '').toLowerCase();
+                    if (uBranch.includes('banda')) b = 'Banda';
+                    else if (uBranch.includes('sabang')) b = 'Sabang';
+                    else if (uBranch.includes('timur') || uBranch.includes('atim')) b = 'Aceh Timur';
+                }
+
+                let isBanda = b === 'Banda' ? 'selected' : '';
+                let isSabang = b === 'Sabang' ? 'selected' : '';
+                let isAtim = b === 'Aceh Timur' ? 'selected' : '';
+                let isAll = b === 'ALL' ? 'selected' : '';
 
                 const filterCabangHtml = `
                     <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input p-2 text-xs font-bold w-1/2 md:w-auto">
-                        <option value="ALL">Semua Cabang</option>
+                        <option value="ALL" ${isAll}>Semua Cabang</option>
                         <option value="Sabang" ${isSabang}>Sabang</option>
                         <option value="Banda" ${isBanda}>Banda Aceh</option>
                         <option value="Aceh Timur" ${isAtim}>Aceh Timur</option>
