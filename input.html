@@ -81,8 +81,19 @@
         const CONFIG = {
             WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
             PRICING: {
-                Paket: [ { name: "Malam", price: 50000 }, { name: "Pagi", price: 45000 }, { name: "Sore", price: 45000 }, { name: "Sultan 24H", price: 115000 } ],
-                Regular: [ { name: "3 Jam", price: 30000 }, { name: "4 Jam", price: 40000 }, { name: "5 Jam", price: 50000 } ]
+                // UPDATE HARI INI: Penyesuaian nama dan harga persis dengan poster
+                Paket: [ 
+                    { name: "Malam (00.00-10.00)", price: 50000 }, 
+                    { name: "Pagi (11.00-17.00)", price: 45000 } 
+                ],
+                Regular: [ 
+                    { name: "3 Jam", price: 35000 }, 
+                    { name: "5 Jam", price: 50000 }, 
+                    { name: "12 Jam", price: 95000 }, 
+                    { name: "24 Jam", price: 115000 },
+                    { name: "3 Hari", price: 320000 },
+                    { name: "5 Hari", price: 500000 }
+                ]
             },
             UNITS: [ 
                 { id: 1, label: 'SABANG' }, { id: 2, label: 'SABANG' }, 
@@ -125,7 +136,6 @@
                 APP.showLoader('SINKRONISASI UNIT...');
                 
                 // PERBAIKAN: Agar admin bisa input cabang mana saja, kita paksa fetch 'ALL' branches
-                // Ini memastikan APP.getUnitStatusRaw punya data unit yang lengkap dari semua daerah.
                 const res = await APP.api({ action: 'get_dashboard', role: 'admin', branch: 'ALL' });
                 APP.hideLoader();
                 
@@ -149,7 +159,7 @@
                 const maxD = new Date(now); maxD.setDate(maxD.getDate() + 7); 
                 const maxDate = maxD.toISOString().slice(0,16);
                 
-                // Ambil cabang user untuk default selected, tapi dropdown DIBUKA PENUH
+                // Ambil cabang user untuk default selected
                 const b = STATE.user.branch || ''; 
 
                 return `
@@ -233,7 +243,6 @@
                 if (branchVal === 'Banda') { logistikBox.classList.remove('hidden'); } 
                 else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
 
-                // PERBAIKAN LOGIKA CABANG ACEH TIMUR (ATIM) & KONSISTENSI
                 let branchStr = String(branchVal).toUpperCase();
                 if (branchStr.includes('TIMUR') || branchStr === 'ATIM') {
                     branchStr = 'ATIM';
@@ -290,11 +299,26 @@
                     const rawDate = document.getElementById('r-datetime').value || ''; 
                     const formattedDate = rawDate ? rawDate.replace('T', ' ') + (rawDate.length === 16 ? ':00' : '') : '';
                     
+                    // --- LOGIKA CUT-OFF JAM 1 PAGI ---
+                    let tanggalPembukuan = '';
+                    if (rawDate) {
+                        const dateObj = new Date(rawDate);
+                        // Jika jam main adalah 00.00 s/d 00.59 (sebelum jam 1 pagi), hitung sebagai hari kemarin
+                        if (dateObj.getHours() < 1) {
+                            dateObj.setDate(dateObj.getDate() - 1);
+                        }
+                        // Format ke YYYY-MM-DD
+                        const tzOffset = dateObj.getTimezoneOffset() * 60000;
+                        tanggalPembukuan = (new Date(dateObj - tzOffset)).toISOString().slice(0, 10);
+                    }
+                    // ---------------------------------
+                    
                     const finalName = CONFIG.PRICING[type][prodSel.value].name; 
                     const diskonVal = Number(document.getElementById('r-diskon').value) || 0;
                     let finalPaket = `${finalName} (${type})`; 
                     if (diskonVal > 0) { finalPaket += ` [Diskon ${APP.formatRp(diskonVal)}]`; }
 
+                    // Tambahin 'tanggal_pembukuan' di body request yang dikirim
                     await APP.api({ 
                         action: 'input_rental', 
                         name: document.getElementById('r-name').value, 
@@ -307,11 +331,11 @@
                         pembayaran: document.getElementById('r-pay-status').value, 
                         paket: finalPaket, 
                         jam_mulai_sewa: formattedDate, 
+                        tanggal_pembukuan: tanggalPembukuan, // Dikirim buat keperluan Data Table n8n / dashboard
                         ongkir: Number(document.getElementById('r-ongkir')?document.getElementById('r-ongkir').value:0) || 0, 
                         book_channel: 'Manual (Admin)' 
                     });
                     
-                    // Alihkan user otomatis kembali ke logs setelah selesai input
                     window.location.href = 'logs.html';
                 } catch (error) { 
                     APP.hideLoader(); 
