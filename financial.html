@@ -73,8 +73,9 @@
     <div class="w-full max-w-5xl mx-auto px-4 mt-4">
         <div class="flex bg-white border-4 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_#000]">
             <button onclick="APP.switchTab('omset')" id="tab-omset" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all bg-black text-white">📈 Omset</button>
-            <button onclick="APP.switchTab('biaya')" id="tab-biaya" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100 border-x-4 border-black">💸 Biaya</button>
-            <button onclick="APP.switchTab('report')" id="tab-report" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100">📊 Report</button>
+            <button onclick="APP.switchTab('biaya')" id="tab-biaya" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100 border-l-4 border-black">💸 Biaya</button>
+            <button onclick="APP.switchTab('report')" id="tab-report" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100 border-l-4 border-black">📊 Report</button>
+            <button onclick="APP.switchTab('gaji')" id="tab-gaji" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all hover:bg-gray-100 border-l-4 border-black">🧾 Gaji</button>
         </div>
     </div>
 
@@ -119,7 +120,6 @@ generateMonthOptions: () => {
     let opts = ''; 
     for(let i=0; i<12; i++) { 
         let d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); 
-        // Mengambil tahun dan bulan secara lokal, kebal bug timezone
         let y = d.getFullYear();
         let m = String(d.getMonth() + 1).padStart(2, '0');
         opts += `<option value="${y}-${m}">${names[d.getMonth()]} ${y}</option>`; 
@@ -155,7 +155,7 @@ generateMonthOptions: () => {
                 STATE.activeTab = tab;
                 
                 // Update UI Navigation Tabs
-                ['omset', 'biaya', 'report'].forEach(t => {
+                ['omset', 'biaya', 'report', 'gaji'].forEach(t => {
                     let btn = document.getElementById(`tab-${t}`);
                     if (t === tab) {
                         btn.classList.add('bg-black', 'text-white');
@@ -170,6 +170,7 @@ generateMonthOptions: () => {
                 if (tab === 'omset') { container.innerHTML = APP.renderOmsetTab(); } 
                 else if (tab === 'biaya') { container.innerHTML = APP.renderExpenseForm(); } 
                 else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); APP.updateReportPreview(); }
+                else if (tab === 'gaji') { container.innerHTML = APP.renderGajiTab(); }
             },
 
             // =====================================
@@ -765,6 +766,118 @@ generateMonthOptions: () => {
                 document.getElementById('print-area').innerHTML = printHtml; 
                 document.getElementById('print-area').classList.remove('hidden'); 
                 window.print(); 
+                document.getElementById('print-area').classList.add('hidden');
+            },
+            
+            // =====================================
+            // 4. CETAK SLIP GAJI
+            // =====================================
+            renderGajiTab: () => {
+                return `
+                <div class="mario-card p-6 md:p-8 animate-pop max-w-2xl mx-auto h-fit">
+                    <h2 class="font-black text-center border-b-2 border-black pb-4 mb-6 text-xl uppercase">Cetak Slip Gaji</h2>
+                    <div class="space-y-5">
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Nama Karyawan</label>
+                            <input type="text" id="gaji-nama" placeholder="Contoh: Budi Susanto" class="mario-input p-3" required>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Total Gaji Pokok (Rp)</label>
+                            <input type="number" id="gaji-pokok" placeholder="0" min="0" class="mario-input p-3 border-green-500" required>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Bonus / Tunjangan (Rp)</label>
+                            <input type="number" id="gaji-bonus" placeholder="0" min="0" class="mario-input p-3 border-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase mb-1 block">Tanggal Penerbitan</label>
+                            <input type="date" id="gaji-tanggal" class="mario-input p-3" value="${APP.getTodayStr()}">
+                        </div>
+                        <button onclick="APP.printGaji()" class="w-full mario-btn bg-black text-white p-5 mt-6 text-lg font-black uppercase tracking-widest shadow-[6px_6px_0px_#FFD700] hover:bg-gray-800">🖨️ CETAK SLIP GAJI</button>
+                    </div>
+                </div>`;
+            },
+            
+            printGaji: () => {
+                const nama = document.getElementById('gaji-nama').value.trim() || 'Karyawan';
+                const pokok = Number(document.getElementById('gaji-pokok').value) || 0;
+                const bonus = Number(document.getElementById('gaji-bonus').value) || 0;
+                const tgl = document.getElementById('gaji-tanggal').value || APP.getTodayStr();
+                const total = pokok + bonus;
+
+                // Format penamaan file PDF
+                const fileName = `gaji arena_${nama.toLowerCase().replace(/\s+/g, '_')}_${tgl.replace(/-/g, '')}`;
+                const printDate = new Date().toLocaleString('id-ID');
+
+                let printHtml = `
+                <div style="font-family: Arial, sans-serif; color: #000; padding: 20px; max-width: 800px; margin: 0 auto; border: 2px solid #000; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" style="width: 80px; height: 80px; object-fit: contain;">
+                            <div>
+                                <h1 style="font-size:24px; margin:0; text-transform:uppercase; font-weight:900; color: #FF6B00;">ARENA PLAYBOX</h1>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold;">OFFICIAL PAYSLIP / SLIP GAJI</p>
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 12px;">
+                            <p style="margin: 2px 0;"><b>Tanggal:</b> ${tgl}</p>
+                            <p style="margin: 2px 0;"><b>Dicetak:</b> ${printDate}</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr><td style="padding: 5px 0; width: 150px; font-weight: bold;">Nama Karyawan</td><td>: <span style="text-transform: uppercase; font-size: 16px; font-weight: 900;">${nama}</span></td></tr>
+                            <tr><td style="padding: 5px 0; font-weight: bold;">Posisi / Jabatan</td><td>: Staff Arena</td></tr>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size: 14px; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px;">Rincian Penghasilan</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 30px;">
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ccc; font-weight: bold;">Gaji Pokok</td>
+                            <td style="padding: 10px; border: 1px solid #ccc; text-align: right;">${APP.formatRp(pokok)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ccc; font-weight: bold;">Bonus / Tunjangan</td>
+                            <td style="padding: 10px; border: 1px solid #ccc; text-align: right;">${APP.formatRp(bonus)}</td>
+                        </tr>
+                        <tr style="background: #f3f4f6;">
+                            <td style="padding: 12px 10px; border: 2px solid #000; font-weight: 900; font-size: 16px;">TOTAL TAKE HOME PAY</td>
+                            <td style="padding: 12px 10px; border: 2px solid #000; text-align: right; font-weight: 900; font-size: 18px; color: #16a34a;">${APP.formatRp(total)}</td>
+                        </tr>
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px; padding: 0 20px;">
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 70px; color: #666;">Diterima Oleh,</p>
+                            <p style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; text-transform: uppercase;">${nama}</p>
+                            <p style="margin-top: 5px; font-size: 12px;">Karyawan</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 70px; color: #666;">Disetujui Oleh,</p>
+                            <p style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; text-transform: uppercase;">${STATE.user.username}</p>
+                            <p style="margin-top: 5px; font-size: 12px;">Manager / Admin</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 40px; text-align: center; border-top: 1px dashed #ccc; padding-top: 15px;">
+                        <p style="font-size: 10px; color: #999; font-style: italic;">Slip gaji ini di-generate secara otomatis oleh Arena System dan sah tanpa tanda tangan basah jika disetujui via sistem.</p>
+                    </div>
+                </div>
+                `;
+
+                document.getElementById('print-area').innerHTML = printHtml;
+                document.getElementById('print-area').classList.remove('hidden');
+                
+                // Memanipulasi tag title untuk mengubah default nama file pada sistem dialog 'Save as PDF'
+                const originalTitle = document.title;
+                document.title = fileName;
+                
+                window.print();
+                
+                // Mengembalikan title ke semula dan menyembunyikan div print
+                document.title = originalTitle;
                 document.getElementById('print-area').classList.add('hidden');
             }
         };
