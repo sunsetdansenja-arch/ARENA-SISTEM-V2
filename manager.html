@@ -297,7 +297,8 @@
                     let logMonthStr = safeDate.substring(0,7);
                     
                     const status = String(l.status_unit_arena).toLowerCase();
-                    const revenue = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir || l.ongkir_arena) || 0);
+                    // Disesuaikan dengan finance.html (Hanya tagihan, tanpa ongkir)
+                    const revenue = Number(l.tagihan_arena) || 0;
 
                     // Kalkulasi Pace Bulan Lalu (Hanya untuk Versus Mode)
                     // Syarat: Status tidak batal/pending, DAN sudah dibayar (Lunas/Cash/Transfer)
