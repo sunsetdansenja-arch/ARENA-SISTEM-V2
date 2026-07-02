@@ -304,7 +304,8 @@
                     // Syarat: Status tidak batal/pending, DAN sudah dibayar (Lunas/Cash/Transfer)
                     let isLunas = payMethodRaw.includes('lunas') || payMethodRaw.includes('cash') || payMethodRaw.includes('transfer');
                     
-                    if (logMonthStr === lastMonthStr && !['batal', 'pending', 'maintenance'].includes(status) && isLunas) {
+                    // Mengikuti finance.html: Semua masuk hitungan asal bukan batal/pending (tanpa peduli lunas)
+                    if (logMonthStr === lastMonthStr && !['batal', 'pending', 'maintenance'].includes(status)) {
                         if (logDay <= currentDayOfMonth) {
                             lastMonthPaceRevenue += revenue;
                         }
@@ -325,8 +326,8 @@
                     if (status === 'batal') {
                         totalBatal++;
                     } 
-                    // FILTER BUG 1: Hitung Valid HANYA JIKA BUKAN BATAL/PENDING/MAINTENANCE *DAN* STATUS PEMBAYARAN LUNAS
-                    else if (!['batal', 'pending', 'maintenance'].includes(status) && isLunas) {
+                    // Sesuai finance.html: Semua transaksi masuk hitungan pencapaian (meski status belum bayar)
+                    else if (!['batal', 'pending', 'maintenance'].includes(status)) {
                         totalValid++;
                         totalRevenue += revenue;
                         
