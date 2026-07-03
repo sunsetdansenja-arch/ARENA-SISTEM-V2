@@ -316,23 +316,26 @@
 
                     totalAll++;
                     
-                    let creatorRaw = String(l.admin_creator || l.Users || l.admin_name || '').toLowerCase();
-                    if (creatorRaw === 'self-booking' || creatorRaw === 'auto (web)' || creatorRaw === '') {
-                        creatorRaw = String(l.Users || 'Sistem').toLowerCase();
+                    // PERBAIKAN LOGIC NAMA PIC MELALUI KOLOM admin_creator
+                    let creatorRaw = String(l.admin_creator || '').trim();
+                    if (!creatorRaw || creatorRaw.toLowerCase() === 'self-booking' || creatorRaw.toLowerCase() === 'auto (web)') {
+                        creatorRaw = String(l.Users || 'Sistem').trim(); // Fallback ke Users jika admin_creator kosong
                     }
                     const admin = creatorRaw.toUpperCase();
+                    
                     const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
 
                     if (status === 'batal') {
                         totalBatal++;
                     } 
-                    // Sesuai finance.html: Semua transaksi masuk hitungan pencapaian (meski status belum bayar)
                     else if (!['batal', 'pending', 'maintenance'].includes(status)) {
                         totalValid++;
                         totalRevenue += revenue;
                         
-                        // Hitung KPI (Hanya dari yang sudah fix jadi uang)
-                        kpis[admin] = (kpis[admin] || 0) + 1;
+                        // HITUNG KPI (Berdasarkan Total Revenue & Total Trx)
+                        if (!kpis[admin]) { kpis[admin] = { trx: 0, revenue: 0 }; }
+                        kpis[admin].trx += 1;
+                        kpis[admin].revenue += revenue;
                         
                         // Hitung Distribusi Cabang
                         if(branchCount[branch] !== undefined) branchCount[branch]++;
@@ -437,24 +440,25 @@
                 }
                 branchContainer.innerHTML = branchHtml || '<p class="text-xs text-gray-400 font-bold">Tidak ada data.</p>';
 
-                // ==========================
+// ==========================
                 // 7. KPI ADMIN LIST
                 // ==========================
                 const kpiContainer = document.getElementById('kpi-list');
-                const sortedKpis = Object.entries(kpis).sort((a, b) => b[1] - a[1]);
+                // Sorting sekarang dilakukan berdasarkan omset/revenue tertinggi, bukan jumlah trx
+                const sortedKpis = Object.entries(kpis).sort((a, b) => b[1].revenue - a[1].revenue);
                 
                 const medals = ['👑', '🥈', '🥉'];
 
                 if (sortedKpis.length === 0) {
                     kpiContainer.innerHTML = '<p class="text-center text-sm font-bold text-gray-400 py-4 border-2 border-dashed border-gray-300 rounded-xl">Belum ada data admin bulan ini.</p>';
                 } else {
-                    const topScore = sortedKpis[0][1];
-                    kpiContainer.innerHTML = sortedKpis.map(([name, count], index) => {
+                    const topScore = sortedKpis[0][1].revenue;
+                    kpiContainer.innerHTML = sortedKpis.map(([name, data], index) => {
                         let rankIcon = index < 3 
                             ? `<div class="w-8 h-8 rounded-full bg-yellow-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-lg">${medals[index]}</div>` 
                             : `<div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xs font-black">#${index+1}</div>`;
                         
-                        let barPct = Math.min((count / topScore) * 100, 100); 
+                        let barPct = topScore > 0 ? Math.min((data.revenue / topScore) * 100, 100) : 0; 
                         
                         return `
                         <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000]">
@@ -462,7 +466,10 @@
                             <div class="flex-grow pr-2">
                                 <div class="flex justify-between items-end mb-1">
                                     <span class="font-black text-xs uppercase">${name}</span>
-                                    <span class="font-black text-sm text-[#FF6B00] font-num">${count} <span class="text-[9px] font-bold text-gray-500">trx</span></span>
+                                    <div class="text-right">
+                                        <span class="font-black text-sm text-[#FF6B00] font-num">${APP.formatRp(data.revenue)}</span>
+                                        <span class="text-[9px] font-bold text-gray-500 block -mt-1">${data.trx} trx</span>
+                                    </div>
                                 </div>
                                 <div class="w-full bg-gray-300 rounded-full h-2 border border-black overflow-hidden">
                                     <div class="bg-black h-full border-r border-black" style="width: ${barPct}%"></div>
