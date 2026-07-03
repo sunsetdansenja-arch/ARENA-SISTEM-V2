@@ -229,6 +229,9 @@
         const CONFIG = { WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1" };
         const STATE = { logs: [] };
 
+        // Konfigurasi Target KPI Admin
+        const ADMIN_TARGET_TRX = 150; 
+
         const APP = {
             init: () => {
                 document.getElementById('user-info-text').innerText = `${session.username.toUpperCase()} | EXECUTIVE DASHBOARD`;
@@ -237,7 +240,6 @@
             logout: () => { localStorage.removeItem('arena_session_v6'); window.location.href = 'index.html'; },
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0),
             
-            // Helper pengambil bulan (Kebal Timezone Bug)
             getYearMonthStr: (offsetMonths = 0) => {
                 let d = new Date();
                 d.setDate(1); 
@@ -259,7 +261,6 @@
                 const res = await APP.api({ action: 'get_dashboard', role: 'manager', branch: 'ALL' });
                 document.getElementById('loader').classList.add('hidden');
 
-                // Filter hanya data log, abaikan expense
                 STATE.logs = Array.isArray(res) ? res.map(i => i.json || i).filter(i => i.tagihan_arena !== undefined) : [];
                 APP.processInsights();
             },
@@ -272,13 +273,18 @@
                 
                 let totalValid = 0;
                 let totalRevenue = 0;
-                let lastMonthPaceRevenue = 0; // Omset bulan lalu di tanggal yang sama
+                let lastMonthPaceRevenue = 0; 
                 
                 let totalBatal = 0;
                 let totalAll = 0;
                 
-                let kpis = {};
-                let branchCount = { 'Banda': 0, 'Sabang': 0, 'Aceh Timur': 0 };
+                let kpis = {}; 
+                // Diubah strukturnya untuk menyimpan total trx dan total revenue per daerah
+                let branchData = { 
+                    'Banda': { trx: 0, rev: 0 }, 
+                    'Sabang': { trx: 0, rev: 0 }, 
+                    'Aceh Timur': { trx: 0, rev: 0 } 
+                };
                 
                 const dayNames = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
                 let dayCounts = { 'SENIN': 0, 'SELASA': 0, 'RABU': 0, 'KAMIS': 0, 'JUMAT': 0, 'SABTU': 0, 'MINGGU': 0 };
@@ -287,39 +293,40 @@
                     let safeDate = l.jam_mulai_sewa ? String(l.jam_mulai_sewa) : (l.createdAt ? String(l.createdAt) : '');
                     if (!safeDate) return;
 
-                    // FILTER BUG 2: Jangan hitung instruksi/log Maintenance atau System
                     let payMethodRaw = String(l.pembayaran || '').toLowerCase();
                     let paketRaw = String(l.paket_arena || '').toLowerCase();
                     if (payMethodRaw.includes('system') || paketRaw.includes('maintenance')) return;
 
+                    // Mengurai Format Tanggal agar lebih robust (mendukung YYYY-MM-DD dan format timestamp n8n)
+                    let logMonthStr = "";
+                    if (safeDate.includes("-")) {
+                        logMonthStr = safeDate.substring(0,7);
+                    } else if (safeDate.includes("/")) {
+                        let parts = safeDate.split(' ')[0].split('/');
+                        if (parts.length === 3) logMonthStr = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+                    }
+                    if (!logMonthStr) logMonthStr = safeDate.substring(0,7);
+
                     let logDateObj = new Date(safeDate.replace(' ', 'T'));
                     let logDay = logDateObj.getDate();
-                    let logMonthStr = safeDate.substring(0,7);
                     
                     const status = String(l.status_unit_arena).toLowerCase();
-                    // Disesuaikan dengan finance.html (Hanya tagihan, tanpa ongkir)
                     const revenue = Number(l.tagihan_arena) || 0;
-
-                    // Kalkulasi Pace Bulan Lalu (Hanya untuk Versus Mode)
-                    // Syarat: Status tidak batal/pending, DAN sudah dibayar (Lunas/Cash/Transfer)
-                    let isLunas = payMethodRaw.includes('lunas') || payMethodRaw.includes('cash') || payMethodRaw.includes('transfer');
                     
-                    // Mengikuti finance.html: Semua masuk hitungan asal bukan batal/pending (tanpa peduli lunas)
                     if (logMonthStr === lastMonthStr && !['batal', 'pending', 'maintenance'].includes(status)) {
                         if (logDay <= currentDayOfMonth) {
                             lastMonthPaceRevenue += revenue;
                         }
                     }
 
-                    // Hanya proses Data Bulan Ini ke bawah
                     if (logMonthStr !== currentMonthStr) return;
 
                     totalAll++;
                     
-                    // PERBAIKAN LOGIC NAMA PIC MELALUI KOLOM admin_creator
+                    // Ambil Admin Creator dengan aman
                     let creatorRaw = String(l.admin_creator || '').trim();
                     if (!creatorRaw || creatorRaw.toLowerCase() === 'self-booking' || creatorRaw.toLowerCase() === 'auto (web)') {
-                        creatorRaw = String(l.Users || 'Sistem').trim(); // Fallback ke Users jika admin_creator kosong
+                        creatorRaw = String(l.Users || 'Sistem').trim();
                     }
                     const admin = creatorRaw.toUpperCase();
                     
@@ -332,15 +339,19 @@
                         totalValid++;
                         totalRevenue += revenue;
                         
-                        // HITUNG KPI (Berdasarkan Total Revenue & Total Trx)
-                        if (!kpis[admin]) { kpis[admin] = { trx: 0, revenue: 0 }; }
+                        // HITUNG KPI ADMIN
+                        if (!kpis[admin]) {
+                            kpis[admin] = { trx: 0, revenue: 0 };
+                        }
                         kpis[admin].trx += 1;
                         kpis[admin].revenue += revenue;
                         
-                        // Hitung Distribusi Cabang
-                        if(branchCount[branch] !== undefined) branchCount[branch]++;
+                        // HITUNG DISTRIBUSI CABANG & PEMASUKAN
+                        if(branchData[branch] !== undefined) {
+                            branchData[branch].trx++;
+                            branchData[branch].rev += revenue;
+                        }
 
-                        // Hitung Hari Tersibuk berdasarkan nama hari (hanya dari trx valid)
                         if (!isNaN(logDateObj.getTime())) {
                             let dayIndex = logDateObj.getDay();
                             dayCounts[dayNames[dayIndex]]++;
@@ -348,9 +359,7 @@
                     }
                 });
 
-                // ==========================
-                // FITUR 1: UPDATE UI VERSUS MODE
-                // ==========================
+                // Render Summary Overview
                 document.querySelectorAll('.current-date-text').forEach(el => el.innerText = currentDayOfMonth);
                 document.getElementById('vs-last-month').innerText = APP.formatRp(lastMonthPaceRevenue);
                 document.getElementById('vs-current-month').innerText = APP.formatRp(totalRevenue);
@@ -368,9 +377,7 @@
                     vsBadge.className = "mt-3 text-[10px] md:text-xs font-black uppercase px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_#000] bg-yellow-400 text-black z-10";
                 }
 
-                // ==========================
-                // 1. MANAGER TARGET (150) & FITUR 2: MILESTONES
-                // ==========================
+                // Render Master Target
                 const mgrTarget = 150;
                 const mgrPercent = Math.min(Math.round((totalValid / mgrTarget) * 100), 100);
                 document.getElementById('mgr-current').innerText = totalValid;
@@ -381,23 +388,15 @@
                 if (totalValid >= mgrTarget) mgrStatusTxt = "🎉 LUAR BIASA! TARGET MANAJER BULAN INI TELAH TERCAPAI.";
                 document.getElementById('mgr-status-text').innerText = mgrStatusTxt;
 
-                // Cek Milestone (Setiap 10 Transaksi)
                 const currentMilestone = Math.floor(totalValid / 10) * 10;
                 const lastAck = parseInt(localStorage.getItem('arena_milestone') || '0');
-                
                 if (currentMilestone >= 10 && currentMilestone > lastAck && currentMilestone <= 150) {
                     APP.showMilestone(currentMilestone, mgrTarget - totalValid);
                 }
 
-                // ==========================
-                // 2. RATA-RATA HARIAN
-                // ==========================
                 const dailyAvg = totalValid > 0 ? (totalValid / currentDayOfMonth).toFixed(1) : 0;
                 document.getElementById('insight-daily').innerHTML = `${dailyAvg} <span class="text-[10px] font-bold text-gray-500">trx</span>`;
 
-                // ==========================
-                // 3. HARI TERSIBUK (Senin/Selasa)
-                // ==========================
                 let maxDayName = '-'; 
                 let maxDayCount = 0;
                 for (const [dName, dCount] of Object.entries(dayCounts)) {
@@ -406,45 +405,46 @@
                 document.getElementById('insight-maxday').innerText = maxDayName;
                 document.getElementById('insight-maxcount').innerText = `${maxDayCount} trx total`;
 
-                // ==========================
-                // 4. NILAI RATA-RATA TRANSAKSI
-                // ==========================
                 const avgValue = totalValid > 0 ? (totalRevenue / totalValid) : 0;
                 document.getElementById('insight-avgval').innerText = APP.formatRp(avgValue);
 
-                // ==========================
-                // 5. CANCEL RATE
-                // ==========================
                 const cancelRate = totalAll > 0 ? ((totalBatal / totalAll) * 100).toFixed(1) : 0;
                 document.getElementById('insight-cancel').innerText = `${cancelRate}%`;
 
                 // ==========================
-                // 6. DISTRIBUSI CABANG
+                // 6. RENDER DISTRIBUSI CABANG (+ TOTAL OMSET)
                 // ==========================
                 const branchContainer = document.getElementById('branch-dist');
                 const branchColors = { 'Banda': 'bg-blue-600', 'Sabang': 'bg-teal-500', 'Aceh Timur': 'bg-orange-500' };
                 let branchHtml = '';
                 
-                for (const [bName, bCount] of Object.entries(branchCount)) {
-                    let pct = totalValid > 0 ? Math.round((bCount / totalValid) * 100) : 0;
+                for (const [bName, bData] of Object.entries(branchData)) {
+                    let pct = totalRevenue > 0 ? Math.round((bData.rev / totalRevenue) * 100) : 0;
                     branchHtml += `
                         <div class="bg-white p-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000]">
                             <div class="flex justify-between items-end mb-1">
-                                <span class="font-black text-xs uppercase">${bName === 'Banda' ? 'Banda Aceh' : bName}</span>
-                                <span class="font-black text-sm font-num">${bCount} <span class="text-[9px] font-bold text-gray-400">trx</span> <span class="text-xs text-blue-700 ml-1">(${pct}%)</span></span>
+                                <div>
+                                    <span class="font-black text-xs uppercase block">${bName === 'Banda' ? 'Banda Aceh' : bName}</span>
+                                    <span class="text-[10px] font-bold text-gray-500">${bData.trx} transaksi</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-black text-sm font-num text-[#FF6B00]">${APP.formatRp(bData.rev)}</span>
+                                    <span class="text-xs font-black text-blue-700 ml-1 block -mt-1">(${pct}%)</span>
+                                </div>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3 border border-black overflow-hidden">
+                            <div class="w-full bg-gray-200 rounded-full h-3 border border-black overflow-hidden mt-1">
                                 <div class="${branchColors[bName]} h-full border-r border-black" style="width: ${pct}%"></div>
                             </div>
                         </div>`;
                 }
                 branchContainer.innerHTML = branchHtml || '<p class="text-xs text-gray-400 font-bold">Tidak ada data.</p>';
 
-// ==========================
-                // 7. KPI ADMIN LIST
+                // ==========================
+                // 7. RENDER KPI ADMIN LIST (DENGAN SISA TARGET)
                 // ==========================
                 const kpiContainer = document.getElementById('kpi-list');
-                // Sorting sekarang dilakukan berdasarkan omset/revenue tertinggi, bukan jumlah trx
+                
+                // Sorting berdasarkan Omset Tertinggi
                 const sortedKpis = Object.entries(kpis).sort((a, b) => b[1].revenue - a[1].revenue);
                 
                 const medals = ['👑', '🥈', '🥉'];
@@ -452,27 +452,37 @@
                 if (sortedKpis.length === 0) {
                     kpiContainer.innerHTML = '<p class="text-center text-sm font-bold text-gray-400 py-4 border-2 border-dashed border-gray-300 rounded-xl">Belum ada data admin bulan ini.</p>';
                 } else {
-                    const topScore = sortedKpis[0][1].revenue;
                     kpiContainer.innerHTML = sortedKpis.map(([name, data], index) => {
                         let rankIcon = index < 3 
                             ? `<div class="w-8 h-8 rounded-full bg-yellow-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-lg">${medals[index]}</div>` 
                             : `<div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center text-xs font-black">#${index+1}</div>`;
                         
-                        let barPct = topScore > 0 ? Math.min((data.revenue / topScore) * 100, 100) : 0; 
+                        // Kalkulasi Jarak ke Target
+                        let sisaTarget = ADMIN_TARGET_TRX - data.trx;
+                        let targetInfoHtml = sisaTarget > 0 
+                            ? `<span class="text-[9px] font-black text-red-500 uppercase">🚨 Sisa ${sisaTarget} Trx ke Target</span>`
+                            : `<span class="text-[9px] font-black text-green-600 uppercase">✅ TARGET ${ADMIN_TARGET_TRX} TRX TERCAPAI!</span>`;
+
+                        // Progress Bar berdasarkan Target
+                        let barPct = Math.min((data.trx / ADMIN_TARGET_TRX) * 100, 100); 
+                        let barColor = sisaTarget > 0 ? "bg-black" : "bg-green-500";
                         
                         return `
                         <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000]">
                             ${rankIcon}
                             <div class="flex-grow pr-2">
-                                <div class="flex justify-between items-end mb-1">
-                                    <span class="font-black text-xs uppercase">${name}</span>
+                                <div class="flex justify-between items-start mb-1">
+                                    <div>
+                                        <span class="font-black text-xs uppercase block">${name}</span>
+                                        ${targetInfoHtml}
+                                    </div>
                                     <div class="text-right">
-                                        <span class="font-black text-sm text-[#FF6B00] font-num">${APP.formatRp(data.revenue)}</span>
-                                        <span class="text-[9px] font-bold text-gray-500 block -mt-1">${data.trx} trx</span>
+                                        <span class="font-black text-sm text-[#FF6B00] font-num block leading-none">${APP.formatRp(data.revenue)}</span>
+                                        <span class="text-[10px] font-black text-gray-600">${data.trx} <span class="text-[9px] font-bold text-gray-500">Total Trx</span></span>
                                     </div>
                                 </div>
-                                <div class="w-full bg-gray-300 rounded-full h-2 border border-black overflow-hidden">
-                                    <div class="bg-black h-full border-r border-black" style="width: ${barPct}%"></div>
+                                <div class="w-full bg-gray-300 rounded-full h-2 border border-black overflow-hidden mt-1">
+                                    <div class="${barColor} h-full border-r border-black" style="width: ${barPct}%"></div>
                                 </div>
                             </div>
                         </div>`;
@@ -480,7 +490,6 @@
                 }
             },
 
-            // Fungsi untuk Milestone Pop-up
             showMilestone: (milestone, left) => {
                 const quotes = [
                     "Setiap keringat hari ini adalah investasi untuk cuan besok! 🔥",
@@ -497,8 +506,6 @@
                 document.getElementById('milestone-left').innerText = left > 0 ? left : 0;
                 
                 document.getElementById('modal-milestone').classList.remove('hidden');
-                
-                // Simpan agar pop-up tidak muncul lagi di milestone yang sama
                 localStorage.setItem('arena_milestone', milestone.toString());
             },
 
