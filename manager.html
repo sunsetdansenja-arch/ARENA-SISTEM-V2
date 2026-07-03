@@ -297,7 +297,7 @@
                     let paketRaw = String(l.paket_arena || '').toLowerCase();
                     if (payMethodRaw.includes('system') || paketRaw.includes('maintenance')) return;
 
-                    // Mengurai Format Tanggal agar lebih robust (mendukung YYYY-MM-DD dan format timestamp n8n)
+                    // Mengurai Format Tanggal agar lebih robust
                     let logMonthStr = "";
                     if (safeDate.includes("-")) {
                         logMonthStr = safeDate.substring(0,7);
@@ -323,7 +323,7 @@
 
                     totalAll++;
                     
-                    // Ambil Admin Creator dengan aman
+                    // Ambil Admin Creator
                     let creatorRaw = String(l.admin_creator || '').trim();
                     if (!creatorRaw || creatorRaw.toLowerCase() === 'self-booking' || creatorRaw.toLowerCase() === 'auto (web)') {
                         creatorRaw = String(l.Users || 'Sistem').trim();
@@ -394,20 +394,32 @@
                     APP.showMilestone(currentMilestone, mgrTarget - totalValid);
                 }
 
+                // ==========================
+                // 2. RATA-RATA HARIAN
+                // ==========================
                 const dailyAvg = totalValid > 0 ? (totalValid / currentDayOfMonth).toFixed(1) : 0;
                 document.getElementById('insight-daily').innerHTML = `${dailyAvg} <span class="text-[10px] font-bold text-gray-500">trx</span>`;
 
+                // ==========================
+                // 3. HARI TERSIBUK
+                // ==========================
                 let maxDayName = '-'; 
                 let maxDayCount = 0;
                 for (const [dName, dCount] of Object.entries(dayCounts)) {
                     if (dCount > maxDayCount) { maxDayCount = dCount; maxDayName = dName; }
                 }
-                document.getElementById('insight-maxday').innerText = maxDayName;
-                document.getElementById('insight-maxcount').innerText = `${maxDayCount} trx total`;
+                // [PERBAIKAN BUG CRASH]: Menggunakan innerHTML agar tag <span> tidak terhapus
+                document.getElementById('insight-maxday').innerHTML = `${maxDayName}<br><span id="insight-maxcount" class="text-xs font-black text-black font-num">${maxDayCount} trx total</span>`;
 
+                // ==========================
+                // 4. NILAI RATA-RATA TRANSAKSI
+                // ==========================
                 const avgValue = totalValid > 0 ? (totalRevenue / totalValid) : 0;
                 document.getElementById('insight-avgval').innerText = APP.formatRp(avgValue);
 
+                // ==========================
+                // 5. CANCEL RATE
+                // ==========================
                 const cancelRate = totalAll > 0 ? ((totalBatal / totalAll) * 100).toFixed(1) : 0;
                 document.getElementById('insight-cancel').innerText = `${cancelRate}%`;
 
