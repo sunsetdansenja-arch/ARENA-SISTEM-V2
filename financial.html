@@ -115,17 +115,17 @@
             getYesterdayStr: () => { const d = new Date(); d.setDate(d.getDate()-1); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
             getMonthStr: () => APP.getNowStr().substring(0,7),
             
-generateMonthOptions: () => {
-    const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    let opts = ''; 
-    for(let i=0; i<12; i++) { 
-        let d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); 
-        let y = d.getFullYear();
-        let m = String(d.getMonth() + 1).padStart(2, '0');
-        opts += `<option value="${y}-${m}">${names[d.getMonth()]} ${y}</option>`; 
-    }
-    return opts;
-},
+            generateMonthOptions: () => {
+                const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                let opts = ''; 
+                for(let i=0; i<12; i++) { 
+                    let d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); 
+                    let y = d.getFullYear();
+                    let m = String(d.getMonth() + 1).padStart(2, '0');
+                    opts += `<option value="${y}-${m}">${names[d.getMonth()]} ${y}</option>`; 
+                }
+                return opts;
+            },
 
             api: async (p) => {
                 try {
@@ -181,7 +181,12 @@ generateMonthOptions: () => {
                 const yestStr = APP.getYesterdayStr(); 
                 const monthStr = APP.getMonthStr();
                 
-                let data = { ALL: { t: 0, y: 0, m: 0 }, 'Sabang': { t: 0, y: 0, m: 0 }, 'Banda': { t: 0, y: 0, m: 0 }, 'Aceh Timur': { t: 0, y: 0, m: 0 } };
+                let data = { 
+                    ALL: { t: 0, y: 0, m: 0, cash: 0, tf: 0 }, 
+                    'Sabang': { t: 0, y: 0, m: 0, cash: 0, tf: 0 }, 
+                    'Banda': { t: 0, y: 0, m: 0, cash: 0, tf: 0 }, 
+                    'Aceh Timur': { t: 0, y: 0, m: 0, cash: 0, tf: 0 } 
+                };
                 let lostIncome = 0; let cancelStats = {}; let cancelHtml = ''; let successGroup = { 'Banda': [], 'Sabang': [], 'Aceh Timur': [] };
 
                 [...STATE.logs].reverse().forEach(l => {
@@ -205,7 +210,21 @@ generateMonthOptions: () => {
                         else if (!['pending', 'maintenance'].includes(stat)) { 
                             data.ALL.m += val; 
                             if (data[branch]) data[branch].m += val; 
-                            if (dateStr === todayStr) { data.ALL.t += val; if (data[branch]) data[branch].t += val; } 
+                            
+                            if (dateStr === todayStr) { 
+                                data.ALL.t += val; 
+                                if (data[branch]) data[branch].t += val; 
+
+                                // Tracking Cash vs Transfer khusus HARI INI
+                                const payMethod = String(l.pembayaran || '').toLowerCase();
+                                if (payMethod.includes('cash')) {
+                                    data.ALL.cash += val;
+                                    if (data[branch]) data[branch].cash += val;
+                                } else if (payMethod.includes('transfer') || payMethod.includes('tf')) {
+                                    data.ALL.tf += val;
+                                    if (data[branch]) data[branch].tf += val;
+                                }
+                            } 
                             if (dateStr === yestStr) { data.ALL.y += val; if (data[branch]) data[branch].y += val; } 
                             if(successGroup[branch]) successGroup[branch].push(l); 
                         }
@@ -246,15 +265,39 @@ generateMonthOptions: () => {
                             </div>
                         </div>
 
+                        <h3 class="font-black text-sm mb-3 uppercase text-gray-700 border-l-4 border-yellow-400 pl-2">Status Pembayaran Hari Ini</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="bg-green-50 border-4 border-green-500 p-4 rounded-xl shadow-[4px_4px_0px_#22c55e]">
+                                <p class="text-[10px] font-bold text-green-700 uppercase tracking-widest">💵 Fisik (Laci)</p>
+                                <p class="text-xl md:text-2xl font-black text-green-600 mt-1">${APP.formatRp(data.ALL.cash)}</p>
+                            </div>
+                            <div class="bg-blue-50 border-4 border-blue-500 p-4 rounded-xl shadow-[4px_4px_0px_#3b82f6]">
+                                <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">📱 Transfer (Bank)</p>
+                                <p class="text-xl md:text-2xl font-black text-blue-600 mt-1">${APP.formatRp(data.ALL.tf)}</p>
+                            </div>
+                        </div>
+
                         <h3 class="font-black text-sm mb-3 uppercase text-gray-700 border-l-4 border-[#FF6B00] pl-2">Rincian Per Cabang</h3>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
                             ${['Banda', 'Sabang', 'Aceh Timur'].map(b => `
-                                <div class="border-2 border-black p-4 rounded-xl shadow-[4px_4px_0px_#000] bg-white hover:bg-orange-50 transition-colors">
-                                    <p class="font-black text-base mb-3 border-b-2 border-dashed border-gray-300 pb-2 text-[#FF6B00]">${b === 'Banda' ? 'BANDA ACEH' : b.toUpperCase()}</p>
-                                    <div class="grid grid-cols-3 gap-2 text-center">
-                                        <div><p class="text-[9px] font-bold text-gray-500 uppercase">HARI INI</p><p class="text-sm font-black text-green-600 mt-1">${APP.formatRp(data[b].t)}</p></div>
-                                        <div><p class="text-[9px] font-bold text-gray-500 uppercase">KEMARIN</p><p class="text-sm font-black text-gray-700 mt-1">${APP.formatRp(data[b].y)}</p></div>
-                                        <div class="bg-orange-100 rounded py-1"><p class="text-[9px] font-bold text-orange-800 uppercase">BULAN INI</p><p class="text-sm font-black text-[#FF6B00] mt-1">${APP.formatRp(data[b].m)}</p></div>
+                                <div class="border-2 border-black p-4 rounded-xl shadow-[4px_4px_0px_#000] bg-white hover:bg-orange-50 transition-colors flex flex-col justify-between">
+                                    <div>
+                                        <p class="font-black text-base mb-3 border-b-2 border-dashed border-gray-300 pb-2 text-[#FF6B00]">${b === 'Banda' ? 'BANDA ACEH' : b.toUpperCase()}</p>
+                                        <div class="grid grid-cols-3 gap-2 text-center mb-2">
+                                            <div><p class="text-[9px] font-bold text-gray-500 uppercase">HARI INI</p><p class="text-sm font-black text-green-600 mt-1">${APP.formatRp(data[b].t)}</p></div>
+                                            <div><p class="text-[9px] font-bold text-gray-500 uppercase">KEMARIN</p><p class="text-sm font-black text-gray-700 mt-1">${APP.formatRp(data[b].y)}</p></div>
+                                            <div class="bg-orange-100 rounded py-1"><p class="text-[9px] font-bold text-orange-800 uppercase">BULAN INI</p><p class="text-sm font-black text-[#FF6B00] mt-1">${APP.formatRp(data[b].m)}</p></div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-center mt-2 border-t-2 border-dashed border-gray-300 pt-2">
+                                        <div class="bg-green-100 rounded py-1 border border-green-300">
+                                            <p class="text-[9px] font-bold text-green-800 uppercase">CASH</p>
+                                            <p class="text-xs font-black text-green-600 mt-1">${APP.formatRp(data[b].cash)}</p>
+                                        </div>
+                                        <div class="bg-blue-100 rounded py-1 border border-blue-300">
+                                            <p class="text-[9px] font-bold text-blue-800 uppercase">TRANSFER</p>
+                                            <p class="text-xs font-black text-blue-600 mt-1">${APP.formatRp(data[b].tf)}</p>
+                                        </div>
                                     </div>
                                 </div>`).join('')}
                         </div>
@@ -442,10 +485,10 @@ generateMonthOptions: () => {
             // =====================================
             calculateFinancials: (monthStr) => {
                 let fin = {
-                    ALL: { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], dimas_total: 0, dp_total: 0 },
-                    'Banda': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.4, sh_cut: 0, dp_fee: 0, dp_comm: 0 },
-                    'Sabang': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0 },
-                    'Aceh Timur': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0 }
+                    ALL: { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], dimas_total: 0, dp_total: 0, cash: 0, tf: 0 },
+                    'Banda': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.4, sh_cut: 0, dp_fee: 0, dp_comm: 0, cash: 0, tf: 0 },
+                    'Sabang': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0, cash: 0, tf: 0 },
+                    'Aceh Timur': { gross: 0, expense: 0, net: 0, booking_mandiri: 0, booking_manual: 0, order_logs: [], exp_logs: [], sh_pct: 0.5, sh_cut: 0, dp_fee: 0, dp_comm: 0, cash: 0, tf: 0 }
                 };
 
                 // 1. Rekap Pemasukan
@@ -471,6 +514,16 @@ generateMonthOptions: () => {
                         fin.ALL.booking_mandiri++; fin[b].booking_mandiri++;
                     } else {
                         fin.ALL.booking_manual++; fin[b].booking_manual++;
+                    }
+
+                    // Tambahan logik Cash vs Transfer untuk report bulanan
+                    const payMethod = String(l.pembayaran || '').toLowerCase();
+                    if (payMethod.includes('cash')) {
+                        fin.ALL.cash += val;
+                        fin[b].cash += val;
+                    } else if (payMethod.includes('transfer') || payMethod.includes('tf')) {
+                        fin.ALL.tf += val;
+                        fin[b].tf += val;
                     }
 
                     fin.ALL.order_logs.push(l);
@@ -596,9 +649,14 @@ generateMonthOptions: () => {
                 } else {
                     let bData = type === 'ALL' ? fin.ALL : fin[type];
                     let dpInfo = type === 'Banda' ? '' : `<p class="text-xs font-bold text-gray-500 border-t-2 border-dashed border-gray-300 pt-3 mt-3 flex justify-between"><span>Biaya Sistem (Drop Point):</span> <span class="text-red-500 font-black">-${APP.formatRp(type === 'ALL' ? fin.ALL.dp_total : fin[type].dp_fee + fin[type].dp_comm)}</span></p>`;
+                    
                     let totalBookings = bData.booking_mandiri + bData.booking_manual; 
                     let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0; 
                     let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
+
+                    let totalGross = bData.gross;
+                    let pctCash = totalGross > 0 ? Math.round((bData.cash / totalGross) * 100) : 0;
+                    let pctTf = totalGross > 0 ? 100 - pctCash : 0;
                     
                     html = `
                         <div class="space-y-4 text-left">
@@ -620,17 +678,32 @@ generateMonthOptions: () => {
                                 <span class="font-black text-3xl md:text-4xl text-green-400">${APP.formatRp(bData.net)}</span>
                             </div>
 
-                            <div class="bg-blue-50 border-2 border-blue-400 p-5 rounded-xl mt-6 shadow-[4px_4px_0px_#3b82f6]">
-                                <p class="font-black text-xs text-blue-800 uppercase mb-3 border-b border-blue-200 pb-2">📊 Rasio Sumber Booking</p>
-                                <div class="flex justify-between text-xs font-bold mb-2">
-                                    <span class="text-indigo-600">Web/Mandiri: ${pctMandiri}%</span>
-                                    <span class="text-gray-600">Admin: ${pctManual}%</span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                <div class="bg-blue-50 border-2 border-blue-400 p-5 rounded-xl shadow-[4px_4px_0px_#3b82f6]">
+                                    <p class="font-black text-xs text-blue-800 uppercase mb-3 border-b border-blue-200 pb-2">📊 Rasio Sumber Booking</p>
+                                    <div class="flex justify-between text-xs font-bold mb-2">
+                                        <span class="text-indigo-600">Web: ${pctMandiri}%</span>
+                                        <span class="text-gray-600">Admin: ${pctManual}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-4 overflow-hidden flex border border-gray-400">
+                                        <div class="bg-indigo-500 h-full" style="width: ${pctMandiri}%"></div>
+                                        <div class="bg-gray-500 h-full" style="width: ${pctManual}%"></div>
+                                    </div>
+                                    <p class="text-[10px] text-gray-500 mt-3 font-bold text-center">${bData.booking_mandiri} trx Mandiri | ${bData.booking_manual} trx Kasir</p>
                                 </div>
-                                <div class="w-full bg-gray-300 rounded-full h-4 overflow-hidden flex border border-gray-400">
-                                    <div class="bg-indigo-500 h-full" style="width: ${pctMandiri}%"></div>
-                                    <div class="bg-gray-500 h-full" style="width: ${pctManual}%"></div>
+
+                                <div class="bg-green-50 border-2 border-green-400 p-5 rounded-xl shadow-[4px_4px_0px_#22c55e]">
+                                    <p class="font-black text-xs text-green-800 uppercase mb-3 border-b border-green-200 pb-2">💵 Rasio Pembayaran</p>
+                                    <div class="flex justify-between text-xs font-bold mb-2">
+                                        <span class="text-green-600">Cash: ${pctCash}%</span>
+                                        <span class="text-blue-600">Transfer: ${pctTf}%</span>
+                                    </div>
+                                    <div class="w-full bg-blue-200 rounded-full h-4 overflow-hidden flex border border-gray-400">
+                                        <div class="bg-green-500 h-full" style="width: ${pctCash}%"></div>
+                                        <div class="bg-blue-500 h-full" style="width: ${pctTf}%"></div>
+                                    </div>
+                                    <p class="text-[10px] text-gray-500 mt-3 font-bold text-center">Cash: ${APP.formatRp(bData.cash)} | Transfer: ${APP.formatRp(bData.tf)}</p>
                                 </div>
-                                <p class="text-[10px] text-gray-500 mt-3 font-bold text-center">${bData.booking_mandiri} trx Mandiri (Otomatis) | ${bData.booking_manual} trx Kasir Admin</p>
                             </div>
                         </div>`;
                 }
@@ -712,13 +785,24 @@ generateMonthOptions: () => {
                     printHtml += `<h2 style="text-align:center; font-size:14px; margin-bottom:20px; font-weight:normal; border-bottom:2px solid #000; padding-bottom:10px;">Periode: <b>${monthLabel}</b> | Cabang: <b>${type === 'ALL' ? 'Semua Cabang (Global)' : type}</b></h2>`;
                     let bData = type === 'ALL' ? fin.ALL : fin[type]; 
                     let dpAmount = type === 'ALL' ? fin.ALL.dp_total : (fin[type].dp_fee + fin[type].dp_comm); 
+                    
                     let totalBookings = bData.booking_mandiri + bData.booking_manual; 
                     let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0; 
                     let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
+
+                    let totalGross = bData.gross;
+                    let pctCash = totalGross > 0 ? Math.round((bData.cash / totalGross) * 100) : 0;
+                    let pctTf = totalGross > 0 ? 100 - pctCash : 0;
                     
                     printHtml += `
                     <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
                         <div style="width: 250px;">
+                            <h3 style="font-size:13px; text-transform:uppercase;">Metode Bayar</h3>
+                            <table style="width:100%; font-size:11px; margin-bottom:15px; border-collapse: collapse;">
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Cash Tunai</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right; color:green;">${APP.formatRp(bData.cash)} (${pctCash}%)</td></tr>
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Transfer</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right; color:blue;">${APP.formatRp(bData.tf)} (${pctTf}%)</td></tr>
+                            </table>
+
                             <h3 style="font-size:13px; text-transform:uppercase;">Rasio Booking</h3>
                             <table style="width:100%; font-size:11px; margin-bottom:10px; border-collapse: collapse;">
                                 <tr><td style="border:1px solid #ccc; padding:4px;">Web (Mandiri)</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right;">${bData.booking_mandiri} trx (${pctMandiri}%)</td></tr>
