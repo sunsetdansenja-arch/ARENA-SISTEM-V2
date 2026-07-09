@@ -63,7 +63,6 @@
         <h2 id="loader-text" class="text-xl font-black text-yellow-400 tracking-widest uppercase">SINKRONISASI DATA...</h2>
     </div>
 
-    <!-- HEADER -->
     <header class="w-full bg-[#111] p-4 sticky top-0 z-40 border-b-4 border-yellow-400 shadow-xl">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4 w-full md:w-auto">
@@ -80,7 +79,6 @@
         </div>
     </header>
 
-    <!-- INLINE TABS -->
     <div class="w-full max-w-5xl mx-auto px-4 mt-6">
         <div class="flex bg-[#1e1e1e] border-4 border-yellow-400 rounded-xl overflow-hidden shadow-[4px_4px_0px_#FFD700]">
             <button onclick="GOD.switchTab('hardware')" id="tab-hardware" class="flex-1 py-3 text-xs md:text-sm font-black uppercase transition-all bg-yellow-400 text-black">🔧 Hardware</button>
@@ -89,10 +87,8 @@
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
     <main class="w-full max-w-5xl mx-auto p-4 md:p-6 mt-2 animate-pop">
         
-        <!-- GLOBAL FILTER (Hanya muncul di Analytics & CRM) -->
         <div id="filter-container" class="flex justify-end mb-6 hidden">
             <div class="bg-[#1e1e1e] p-2 rounded-xl border-2 border-gray-600 flex items-center shadow-lg">
                 <span class="text-xs font-bold text-gray-400 mr-3 ml-2 uppercase tracking-widest">Periode:</span>
@@ -100,7 +96,6 @@
             </div>
         </div>
 
-        <!-- VIEW: HARDWARE -->
         <div id="view-hardware" class="mario-card p-6">
             <h2 class="text-lg font-black border-b-2 border-gray-600 pb-3 mb-5 text-yellow-400 uppercase flex items-center gap-2">
                 <span class="text-2xl">🛠️</span> UNIT CONTROL
@@ -109,7 +104,6 @@
             <div id="unit-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- VIEW: ANALYTICS -->
         <div id="view-analytics" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-[#1e1e1e] border-2 border-yellow-400 rounded-xl p-5 text-center shadow-[4px_4px_0px_#FFD700] hover:-translate-y-1 transition-transform">
@@ -135,11 +129,9 @@
             </div>
         </div>
 
-        <!-- VIEW: CRM -->
         <div id="view-crm" class="hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
-                <!-- CUSTOMER BARU -->
                 <div class="mario-card p-0 overflow-hidden flex flex-col h-[500px]">
                     <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
                         <div>
@@ -165,7 +157,6 @@
                     </div>
                 </div>
 
-                <!-- PELANGGAN SETIA -->
                 <div class="mario-card p-0 overflow-hidden flex flex-col h-[500px]">
                     <div class="bg-[#111] p-5 border-b border-gray-700 flex justify-between items-start">
                         <div>
@@ -324,8 +315,6 @@
                     if (isM) { statusColor = 'text-red-500'; statusDot = '🔴'; }
                     else if (isB) { statusColor = 'text-orange-400'; statusDot = '🟠'; }
 
-                    // Hapus kondisi 'disabled' pada button sehingga tetap bisa ditekan meskipun berstatus playing/booked.
-                    // Parameter ke-4 ditambahkan pada fungsi toggleMaintenance untuk melewatkan status asli agar bisa ditampilkan di konfirmasi.
                     mHtml += `
                         <div class="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-700 hover:border-gray-500 transition-colors">
                             <div>
@@ -344,7 +333,6 @@
                 const isTerisi = ['playing','main','booked','pending'].includes(currentStatus);
                 let act = set ? 'KUNCI unit ini untuk MAINTENANCE' : 'KEMBALIKAN unit menjadi NORMAL';
                 
-                // Tambahkan peringatan yang lebih kuat jika memaksa kunci unit yang sedang terisi
                 if (set && isTerisi) {
                     act = `PAKSA KUNCI unit yang sedang TERISI (${currentStatus.toUpperCase()}) untuk MAINTENANCE`;
                 }
@@ -378,9 +366,29 @@
                     const s = String(l.status_unit_arena || '').toLowerCase(); 
                     if(['batal','pending','maintenance'].includes(s)) return;
                     
-                    const d = String(l.jam_mulai_sewa || l.createdAt || '').substring(0,10);
+                    let safeDateStr = String(l.jam_mulai_sewa || l.createdAt || '');
+                    let d = safeDateStr.substring(0,10);
                     if(!d || d.length < 7) return; 
                     
+                    // --- PENYESUAIAN CUT-OFF OPERASIONAL MALAM (00:00 - 02:59 -> Shift Hari Sebelumnya) ---
+                    let timePart = safeDateStr.substring(11, 13);
+                    if (timePart && timePart.trim() !== '') {
+                        let hour = parseInt(timePart, 10);
+                        // Shift booking yang masuk jam 00:xx, 01:xx, atau 02:xx ke tanggal sebelumnya
+                        if (!isNaN(hour) && hour >= 0 && hour <= 2) {
+                            let [y, m, day] = d.split('-').map(Number);
+                            let dateObj = new Date(y, m - 1, day);
+                            dateObj.setDate(dateObj.getDate() - 1);
+                            
+                            let shiftedYear = dateObj.getFullYear();
+                            let shiftedMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            let shiftedDay = String(dateObj.getDate()).padStart(2, '0');
+                            
+                            d = `${shiftedYear}-${shiftedMonth}-${shiftedDay}`;
+                        }
+                    }
+                    // ---------------------------------------------------------------------------------------
+
                     if(d.startsWith(month)) {
                         if(!daily[d]) daily[d] = { Banda:0, Sabang:0, Atim:0, Total:0 };
                         const v = (Number(l.tagihan_arena)||0) + (Number(l.ongkir||l.ongkir_arena)||0);
