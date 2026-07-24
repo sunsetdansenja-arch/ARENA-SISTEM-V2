@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA - Command Center</title>
+    <title>BIZMONITOR - Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -48,7 +48,7 @@
         
         <div class="bg-black text-white p-4 flex justify-between items-center shrink-0">
             <div>
-                <h1 class="font-black text-xl tracking-wider text-[#FFD700]">ARENA MIRROR</h1>
+                <h1 class="font-black text-xl tracking-wider text-[#FFD700]">BUSINESS MONITOR</h1>
                 <p id="connection-status" class="text-xs text-green-400 font-bold flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Terhubung
                 </p>
@@ -71,14 +71,6 @@
             <div onclick="setFilter('BREACH')" class="bg-[#FF6B00] mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-500 flex-shrink-0 min-w-[75px] text-center" id="card-BREACH">
                 <p class="text-[9px] text-white font-black uppercase">> 8 Menit</p>
                 <p id="sla-breach" class="text-lg font-black text-white">0</p>
-            </div>
-            <div onclick="setFilter('PLAYING')" class="bg-red-500 mario-border rounded-xl p-2 cursor-pointer hover:bg-red-400 flex-shrink-0 min-w-[75px] text-center" id="card-PLAYING">
-                <p class="text-[9px] text-white font-black uppercase">Playing</p>
-                <p id="sla-playing" class="text-lg font-black text-white">0</p>
-            </div>
-            <div onclick="setFilter('BOOKED')" class="bg-orange-400 mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-300 flex-shrink-0 min-w-[75px] text-center" id="card-BOOKED">
-                <p class="text-[9px] text-white font-black uppercase">Booked</p>
-                <p id="sla-booked" class="text-lg font-black text-white">0</p>
             </div>
         </div>
 
@@ -112,7 +104,7 @@
         <div id="message-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 chat-bg overscroll-contain min-h-0">
             <div class="h-full flex items-center justify-center">
                 <div class="bg-white mario-border mario-shadow-sm px-4 py-2 rounded-xl text-sm font-black text-black">
-                    Let's A Go! Monitor Arena.
+                    Let's A Go! Monitor Bisnis Anda.
                 </div>
             </div>
         </div>
@@ -120,35 +112,33 @@
 
     <script>
         const WA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/get-chat-logs";
-        const ARENA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1";
+        const BIZ_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1";
         
         let allLogs = []; 
-        let activeArenaData = {}; 
+        let activeBizData = {}; 
         let groupedGroupsArray = []; 
         let currentActiveWa = null;
         let currentFilter = 'ALL'; 
 
         async function fetchAllData() {
             try {
-                const [waRes, arenaRes] = await Promise.all([
+                const [waRes, bizRes] = await Promise.all([
                     fetch(WA_WEBHOOK, { mode: 'cors' }),
-                    fetch(ARENA_WEBHOOK, {
+                    fetch(BIZ_WEBHOOK, {
                         method: 'POST', headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({action: 'get_dashboard', role: 'admin', branch: 'ALL'})
                     })
                 ]);
 
-                if (arenaRes.ok) {
-                    const aData = await arenaRes.json();
-                    activeArenaData = {};
-                    aData.forEach(item => {
+                if (bizRes.ok) {
+                    const bData = await bizRes.json();
+                    activeBizData = {};
+                    bData.forEach(item => {
                         let d = item.json || item;
-                        let stat = String(d.status_unit_arena).toLowerCase();
-                        if (stat === 'booked' || stat === 'playing' || stat === 'main' || stat === 'book') {
-                            let normStat = (stat === 'main') ? 'playing' : (stat === 'book' ? 'booked' : stat);
-                            let waRaw = String(d.nomor_pelanggan_arena || '').replace(/\D/g, '').replace(/^0/, '62');
-                            if(waRaw) activeArenaData[waRaw] = normStat;
-                        }
+                        // Menggunakan nama variabel umum/universal jika ada data status khusus dari n8n
+                        let stat = String(d.status_bisnis || d.status_unit || '').toLowerCase();
+                        let waRaw = String(d.nomor_pelanggan || d.nomor_wa || '').replace(/\D/g, '').replace(/^0/, '62');
+                        if(waRaw && stat) activeBizData[waRaw] = stat;
                     });
                 }
 
@@ -177,7 +167,7 @@
                 if(!tempGroups[l.nomor_wa]) {
                     tempGroups[l.nomor_wa] = { messages: [], name: l.nomor_wa, wa: l.nomor_wa };
                 }
-                if (l.nama && l.nama !== 'Admin Arena' && l.nama !== '?') {
+                if (l.nama && l.nama !== 'Admin' && l.nama !== '?') {
                     tempGroups[l.nomor_wa].name = l.nama;
                 }
                 tempGroups[l.nomor_wa].messages.push(l);
@@ -188,7 +178,7 @@
                 const lastMsgDate = new Date(lastMsg.waktu.replace(' ', 'T'));
                 const diffMins = (new Date() - lastMsgDate) / 60000;
                 
-                group.arenaStatus = activeArenaData[group.wa] || null;
+                group.bizStatus = activeBizData[group.wa] || null;
                 group.isWaiting = lastMsg.tipe === 'Masuk';
                 group.isBreach = group.isWaiting && diffMins > 8;
                 group.diffMins = diffMins;
@@ -214,7 +204,7 @@
                 document.getElementById('tab-unread').classList.add('text-gray-400');
             }
 
-            ['ALL', 'WAITING', 'BREACH', 'PLAYING', 'BOOKED'].forEach(id => {
+            ['ALL', 'WAITING', 'BREACH'].forEach(id => {
                 const card = document.getElementById(`card-${id}`);
                 if (card) {
                     if (filterType === id) { card.classList.add('border-black', 'border-4', 'opacity-100'); card.classList.remove('opacity-60'); }
@@ -226,21 +216,17 @@
         }
 
         function renderSidebar() {
-            let slaWaiting = 0, slaBreach = 0, countPlaying = 0, countBooked = 0;
+            let slaWaiting = 0, slaBreach = 0;
 
             groupedGroupsArray.forEach(g => {
                 if (g.isWaiting) slaWaiting++;
                 if (g.isBreach) slaBreach++;
-                if (g.arenaStatus === 'playing') countPlaying++;
-                if (g.arenaStatus === 'booked') countBooked++;
             });
 
             let filteredArray = groupedGroupsArray.filter(g => {
                 if (currentFilter === 'WAITING') return g.isWaiting;
                 if (currentFilter === 'BREACH') return g.isBreach;
                 if (currentFilter === 'UNREAD') return g.isWaiting;
-                if (currentFilter === 'PLAYING') return g.arenaStatus === 'playing';
-                if (currentFilter === 'BOOKED') return g.arenaStatus === 'booked';
                 return true; 
             });
 
@@ -260,7 +246,6 @@
             filteredArray.forEach(group => {
                 let cardClass = "p-3 rounded-xl mario-border cursor-pointer transition-transform active:translate-y-1 mb-2 ";
                 let badgeHtml = "";
-                let arenaBadgeHtml = "";
 
                 if (group.isBreach) {
                     cardClass += "sla-breach mario-shadow-sm";
@@ -270,11 +255,8 @@
                     badgeHtml = `<span class="bg-black text-white text-[10px] px-2 py-1 rounded-md font-black uppercase">Tunggu ${Math.floor(group.diffMins)}m</span>`;
                 } else {
                     cardClass += "bg-white border-gray-300 opacity-80 hover:bg-gray-50 border-2";
-                    badgeHtml = `<span class="text-black font-black text-[10px]">✓ CLEAR</span>`;
+                    badgeHtml = `<span class="text-black font-black text-[10px]">✓ SELESAI</span>`;
                 }
-
-                if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-red-700 shadow-sm ml-2">🔴 PLAYING</span>`;
-                if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[8px] px-1.5 py-0.5 rounded font-black border border-orange-800 shadow-sm ml-2">⏳ BOOKED</span>`;
 
                 if (currentActiveWa === group.wa) cardClass += " border-4 border-[#FF6B00]";
 
@@ -286,7 +268,6 @@
                         <div class="flex justify-between items-start mb-1">
                             <div class="font-black text-black text-sm flex items-center pr-2 truncate">
                                 <span class="truncate">${group.name}</span> 
-                                ${arenaBadgeHtml}
                             </div>
                             <div class="text-[10px] text-black font-bold whitespace-nowrap bg-white px-1 rounded border border-black">${jam}</div>
                         </div>
@@ -301,8 +282,6 @@
             document.getElementById('sla-total').innerText = groupedGroupsArray.length;
             document.getElementById('sla-waiting').innerText = slaWaiting;
             document.getElementById('sla-breach').innerText = slaBreach;
-            document.getElementById('sla-playing').innerText = countPlaying;
-            document.getElementById('sla-booked').innerText = countBooked;
         }
 
         function openChat(wa, isAutoUpdate = false) {
@@ -310,11 +289,7 @@
             const group = groupedGroupsArray.find(g => g.wa === wa);
             if (!group) return;
 
-            let arenaBadgeHtml = "";
-            if (group.arenaStatus === 'playing') arenaBadgeHtml = `<span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded font-black border border-red-700">🔴 PLAYING</span>`;
-            if (group.arenaStatus === 'booked') arenaBadgeHtml = `<span class="bg-[#FF6B00] text-white text-[10px] px-2 py-1 rounded font-black border border-orange-800">⏳ BOOKED</span>`;
-
-            document.getElementById('chat-name').innerHTML = `${group.name} ${arenaBadgeHtml}`;
+            document.getElementById('chat-name').innerHTML = `${group.name}`;
             document.getElementById('chat-number').innerText = wa.includes('@') ? "WhatsApp Number" : "+" + wa;
             document.getElementById('avatar-placeholder').innerText = group.name.charAt(0).toUpperCase();
             
@@ -376,7 +351,6 @@
                 `;
             });
 
-            // PERBAIKAN BUG HP: Sidebar di-hidden dan Chat Window diubah menjadi flex
             if (window.innerWidth < 768 && !isAutoUpdate) {
                 document.getElementById('sidebar').classList.add('hidden');
                 document.getElementById('sidebar').classList.remove('flex');
@@ -390,7 +364,6 @@
         function backToList() {
             currentActiveWa = null;
             
-            // PERBAIKAN BUG HP: Kembalikan class flex pada sidebar dan sembunyikan Chat Window
             document.getElementById('sidebar').classList.remove('hidden');
             document.getElementById('sidebar').classList.add('flex');
             
