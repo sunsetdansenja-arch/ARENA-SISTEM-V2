@@ -3,108 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIZMONITOR - Command Center</title>
+    <title>BIZMONITOR - Matrix Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --mario-orange: #FF6B00;
-            --mario-yellow: #FFD700;
-            --mario-bg: #f3f4f6;
+            --matrix-red: #FF0000;
+            --matrix-dark-bg: #0A0A0C;
+            --matrix-panel-bg: rgba(15, 15, 18, 0.85);
+            --matrix-hairline: rgba(255, 0, 0, 0.25);
         }
-        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-bg); }
         
-        /* Mario Elements */
-        .mario-border { border: 3px solid black; }
-        .mario-shadow { box-shadow: 4px 4px 0px 0px black; }
-        .mario-shadow-sm { box-shadow: 2px 2px 0px 0px black; }
-        
-        .chat-bg { background-color: #ffe8d6; background-image: radial-gradient(#FF6B00 1px, transparent 1px); background-size: 20px 20px; opacity: 0.9; }
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: var(--matrix-dark-bg);
+            background-image: 
+                linear-gradient(to right, rgba(255, 0, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 0, 0, 0.05) 1px, transparent 1px),
+                url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=80');
+            background-size: 40px 40px, 40px 40px, cover;
+            background-position: center;
+            background-blend-mode: overlay;
+        }
+
+        /* Hairline Industrial Borders & Overlay */
+        .matrix-border { border: 1px solid var(--matrix-red); }
+        .matrix-hairline-border { border: 1px solid var(--matrix-hairline); }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb { background: var(--matrix-red); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Chat Bubbles */
-        .bubble { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; position: relative; }
-        .bubble-admin { background-color: var(--mario-yellow); align-self: flex-end; border-bottom-right-radius: 0; }
-        .bubble-customer { background-color: white; align-self: flex-start; border-bottom-left-radius: 0; }
+        /* Tactical Chat Bubbles */
+        .bubble { max-width: 80%; padding: 12px 16px; font-size: 14px; letter-spacing: 0.02em; }
+        .bubble-admin { 
+            background-color: rgba(255, 0, 0, 0.15); 
+            border: 1px solid var(--matrix-red); 
+            color: #FFFFFF;
+            align-self: flex-end; 
+        }
+        .bubble-customer { 
+            background-color: rgba(20, 20, 25, 0.9); 
+            border: 1px solid var(--matrix-hairline); 
+            color: #E2E8F0;
+            align-self: flex-start; 
+        }
         
-        /* SLA Animations */
-        .sla-breach { animation: pulse-red 1.5s infinite; background-color: #ffcccc !important; }
-        @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        /* SLA Overdue Animation */
+        .sla-breach { 
+            animation: pulse-matrix-red 2s infinite; 
+            background-color: rgba(255, 0, 0, 0.25) !important; 
+            border-color: var(--matrix-red) !important;
+        }
+        @keyframes pulse-matrix-red { 
+            0% { opacity: 0.9; } 50% { opacity: 0.6; } 100% { opacity: 0.9; } 
+        }
         
-        /* Filter Active State */
-        .filter-active { background-color: var(--mario-orange) !important; color: white !important; border-color: black !important; }
-        .card-active { border-color: #FF6B00 !important; background-color: #fff7ed !important; }
+        /* Technical Filter System */
+        .filter-active { 
+            background-color: var(--matrix-red) !important; 
+            color: #000000 !important; 
+            font-weight: 700;
+        }
+        .indicator-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .indicator-active {
+            background-color: var(--matrix-red);
+        }
+        .indicator-inactive {
+            border: 1px solid var(--matrix-red);
+        }
     </style>
 </head>
-<body class="h-[100dvh] w-full overflow-hidden flex bg-gray-200 p-2 md:p-4 gap-4">
+<body class="h-[100dvh] w-full overflow-hidden flex p-2 md:p-6 gap-6 backdrop-blur-sm">
 
-    <div id="sidebar" class="w-full md:w-[420px] flex flex-col bg-white mario-border mario-shadow rounded-2xl h-full z-10 relative overflow-hidden min-h-0">
+    <!-- SIDEBAR MONITOR -->
+    <div id="sidebar" class="w-full md:w-[440px] flex flex-col bg-[var(--matrix-panel-bg)] matrix-hairline-border backdrop-blur-xl h-full z-10 relative overflow-hidden min-h-0">
         
-        <div class="bg-black text-white p-4 flex justify-between items-center shrink-0">
+        <!-- HEADER -->
+        <div class="border-b border-[var(--matrix-hairline)] p-4 flex justify-between items-center shrink-0 bg-black/40">
             <div>
-                <h1 class="font-black text-xl tracking-wider text-[#FFD700]">BUSINESS MONITOR</h1>
-                <p id="connection-status" class="text-xs text-green-400 font-bold flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Terhubung
+                <h1 class="font-bold text-lg tracking-[0.15em] text-white uppercase">BUSINESS MONITOR</h1>
+                <p id="connection-status" class="text-[10px] text-red-500 tracking-wider font-mono flex items-center gap-2 mt-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></span> LOGGED_IN
                 </p>
             </div>
-            <div class="flex gap-2">
-                <button onclick="window.history.back()" class="p-2 bg-[#FFD700] text-black rounded-lg hover:bg-yellow-300 text-xs font-black mario-border transition-transform active:translate-y-1">🏠</button>
-                <button onclick="fetchAllData()" class="p-2 bg-white text-black rounded-lg hover:bg-gray-200 text-xs font-black mario-border transition-transform active:translate-y-1">🔄</button>
+            <div class="flex gap-3 font-mono">
+                <button onclick="window.history.back()" class="w-8 h-8 flex items-center justify-center bg-transparent text-white matrix-hairline-border hover:bg-red-950/30 transition-all text-xs active:scale-95">🏠</button>
+                <button onclick="fetchAllData()" class="w-8 h-8 flex items-center justify-center bg-transparent text-white matrix-hairline-border hover:bg-red-950/30 transition-all text-xs active:scale-95">🔄</button>
             </div>
         </div>
 
-        <div class="bg-gray-100 p-3 border-b-3 border-black flex overflow-x-auto gap-2 hide-scrollbar mario-border border-x-0 border-t-0 shrink-0">
-            <div onclick="setFilter('ALL')" class="bg-white mario-border rounded-xl p-2 cursor-pointer hover:bg-gray-50 flex-shrink-0 min-w-[70px] text-center" id="card-ALL">
-                <p class="text-[9px] text-gray-500 font-black uppercase">Semua</p>
-                <p id="sla-total" class="text-lg font-black text-black">0</p>
+        <!-- MATRIX COUNTER FILTER (GRID METRIC STYLE) -->
+        <div class="bg-black/20 p-4 border-b border-[var(--matrix-hairline)] flex overflow-x-auto gap-3 hide-scrollbar shrink-0">
+            <div onclick="setFilter('ALL')" class="bg-transparent matrix-hairline-border flex-1 min-w-[90px] p-3 cursor-pointer hover:bg-white/5 transition-all text-left relative overflow-hidden" id="card-ALL">
+                <p class="text-[9px] text-gray-500 font-mono tracking-widest uppercase">01 // ALL</p>
+                <p id="sla-total" class="text-2xl font-light text-white mt-1 font-mono">0</p>
             </div>
-            <div onclick="setFilter('WAITING')" class="bg-[#FFD700] mario-border rounded-xl p-2 cursor-pointer hover:bg-yellow-300 flex-shrink-0 min-w-[80px] text-center" id="card-WAITING">
-                <p class="text-[9px] text-black font-black uppercase">Menunggu</p>
-                <p id="sla-waiting" class="text-lg font-black text-black">0</p>
+            <div onclick="setFilter('WAITING')" class="bg-transparent matrix-hairline-border flex-1 min-w-[100px] p-3 cursor-pointer hover:bg-white/5 transition-all text-left relative overflow-hidden" id="card-WAITING">
+                <p class="text-[9px] text-gray-400 font-mono tracking-widest uppercase">02 // QUEUE</p>
+                <p id="sla-waiting" class="text-2xl font-light text-white mt-1 font-mono">0</p>
             </div>
-            <div onclick="setFilter('BREACH')" class="bg-[#FF6B00] mario-border rounded-xl p-2 cursor-pointer hover:bg-orange-500 flex-shrink-0 min-w-[75px] text-center" id="card-BREACH">
-                <p class="text-[9px] text-white font-black uppercase">> 8 Menit</p>
-                <p id="sla-breach" class="text-lg font-black text-white">0</p>
+            <div onclick="setFilter('BREACH')" class="bg-transparent matrix-hairline-border flex-1 min-w-[100px] p-3 cursor-pointer hover:bg-white/5 transition-all text-left relative overflow-hidden" id="card-BREACH">
+                <p class="text-[9px] text-red-500 font-mono tracking-widest uppercase">03 // OVERDUE</p>
+                <p id="sla-breach" class="text-2xl font-light text-red-500 mt-1 font-mono">0</p>
             </div>
         </div>
 
-        <div class="flex text-sm font-black bg-white mario-border border-x-0 border-t-0 shrink-0">
-            <div onclick="setFilter('ALL')" id="tab-all" class="flex-1 text-center py-2.5 cursor-pointer filter-active border-r-3 border-black">Semua Chat</div>
-            <div onclick="setFilter('UNREAD')" id="tab-unread" class="flex-1 text-center py-2.5 cursor-pointer hover:bg-gray-100 text-gray-400">Perlu Dibalas</div>
+        <!-- TAB FILTERS -->
+        <div class="flex text-xs font-mono tracking-widest uppercase bg-black/40 border-b border-[var(--matrix-hairline)] shrink-0">
+            <div onclick="setFilter('ALL')" id="tab-all" class="flex-1 text-center py-3 cursor-pointer filter-active transition-all border-r border-[var(--matrix-hairline)]">ALL_LOGS</div>
+            <div onclick="setFilter('UNREAD')" id="tab-unread" class="flex-1 text-center py-3 cursor-pointer hover:bg-white/5 text-gray-500 transition-all">UNANSWERED</div>
         </div>
 
-        <div id="chat-list" class="flex-1 overflow-y-auto bg-white p-2 space-y-2 overscroll-contain min-h-0">
-            <div class="flex justify-center items-center h-full text-gray-400 font-black animate-pulse">
-                Menarik data...
+        <!-- MONITOR STREAM LIST -->
+        <div id="chat-list" class="flex-1 overflow-y-auto p-3 space-y-3 overscroll-contain min-h-0 bg-black/10">
+            <div class="flex flex-col justify-center items-center h-full text-red-500/40 font-mono text-xs tracking-widest space-y-2">
+                <div class="w-4 h-4 border-2 border-t-transparent border-red-600 rounded-full animate-spin"></div>
+                <span>FETCHING_DATA_STREAM...</span>
             </div>
         </div>
     </div>
 
-    <div id="chat-window" class="hidden md:flex flex-1 flex-col bg-white mario-border mario-shadow rounded-2xl relative h-full overflow-hidden min-h-0 w-full">
+    <!-- MAIN CHAT INTERFACE WINDOW -->
+    <div id="chat-window" class="hidden md:flex flex-1 flex-col bg-[var(--matrix-panel-bg)] matrix-hairline-border backdrop-blur-xl relative h-full overflow-hidden min-h-0 w-full">
         
-        <div class="bg-black text-white p-3 md:p-4 flex items-center border-b-3 border-black z-10 h-[75px] shrink-0">
-            <button onclick="backToList()" class="md:hidden mr-4 p-2 bg-white text-black rounded-lg mario-border font-black text-xs active:translate-y-1">
-                ◀ KEMBALI
+        <!-- INTERFACE WINDOW HEADER -->
+        <div class="bg-black/40 p-4 flex items-center border-b border-[var(--matrix-hairline)] z-10 h-[75px] shrink-0">
+            <button onclick="backToList()" class="md:hidden mr-4 px-3 py-1.5 bg-transparent text-red-500 matrix-hairline-border font-mono text-xs hover:bg-red-950/30 active:scale-95 transition-all">
+                &lt; BACK
             </button>
-            <div class="w-10 h-10 rounded-full bg-[#FFD700] mario-border flex items-center justify-center text-xl mr-3 font-black text-black" id="avatar-placeholder">?</div>
-            <div class="flex-1">
-                <h2 class="font-black text-[#FFD700] text-lg leading-tight uppercase tracking-wide flex items-center gap-2" id="chat-name">
-                    Pilih Chat
+            <div class="w-9 h-9 border border-[var(--matrix-hairline)] flex items-center justify-center text-sm mr-3 font-mono text-white bg-black/60" id="avatar-placeholder">?</div>
+            <div class="flex-1 min-w-0">
+                <h2 class="font-bold text-white text-md tracking-wide uppercase truncate flex items-center gap-3" id="chat-name">
+                    SELECT_SESSION
                 </h2>
-                <p class="text-xs text-gray-300 font-semibold" id="chat-number">Pilih dari sidebar</p>
+                <p class="text-[10px] text-gray-500 font-mono tracking-wider mt-0.5 truncate" id="chat-number">SYSTEM_IDLE</p>
             </div>
         </div>
 
-        <div id="message-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 chat-bg overscroll-contain min-h-0">
-            <div class="h-full flex items-center justify-center">
-                <div class="bg-white mario-border mario-shadow-sm px-4 py-2 rounded-xl text-sm font-black text-black">
-                    Let's A Go! Monitor Bisnis Anda.
+        <!-- SCREEN LOG CONTAINER -->
+        <div id="message-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4 overscroll-contain min-h-0 bg-black/20">
+            <div class="h-full flex flex-col items-center justify-center font-mono text-xs tracking-widest text-gray-600 space-y-2">
+                <div class="matrix-hairline-border px-4 py-3 bg-black/60 text-center uppercase max-w-xs">
+                    [AWAITING_INJECTION]<br>NO_ACTIVE_STREAM_SELECTED
                 </div>
             </div>
         </div>
@@ -135,7 +184,6 @@
                     activeBizData = {};
                     bData.forEach(item => {
                         let d = item.json || item;
-                        // Menggunakan nama variabel umum/universal jika ada data status khusus dari n8n
                         let stat = String(d.status_bisnis || d.status_unit || '').toLowerCase();
                         let waRaw = String(d.nomor_pelanggan || d.nomor_wa || '').replace(/\D/g, '').replace(/^0/, '62');
                         if(waRaw && stat) activeBizData[waRaw] = stat;
@@ -148,15 +196,15 @@
                     processGroups(data);
                     
                     const statusEl = document.getElementById('connection-status');
-                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Terhubung (${new Date().toLocaleTimeString('id-ID').substring(0,5)})`;
-                    statusEl.className = "text-xs text-green-400 font-bold flex items-center gap-1";
+                    statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span> SYSTEM_LIVE // ${new Date().toLocaleTimeString('id-ID').substring(0,5)}`;
+                    statusEl.className = "text-[10px] text-red-500 tracking-wider font-mono flex items-center gap-2 mt-1";
                 } else {
                     throw new Error("HTTP Error");
                 }
             } catch (e) { 
                 const statusEl = document.getElementById('connection-status');
-                statusEl.innerHTML = `⚠️ Terputus`;
-                statusEl.className = "text-xs text-red-500 font-bold flex items-center gap-1";
+                statusEl.innerHTML = `⚠️ STREAM_DISCONNECTED`;
+                statusEl.className = "text-[10px] text-red-600 tracking-wider font-mono flex items-center gap-2 mt-1 font-bold";
             }
         }
 
@@ -196,19 +244,24 @@
             
             if (filterType === 'UNREAD') {
                 document.getElementById('tab-unread').classList.add('filter-active');
-                document.getElementById('tab-all').classList.add('text-gray-400');
+                document.getElementById('tab-all').classList.add('text-gray-500');
                 document.getElementById('tab-all').classList.remove('filter-active');
             } else {
                 document.getElementById('tab-all').classList.add('filter-active');
                 document.getElementById('tab-unread').classList.remove('filter-active');
-                document.getElementById('tab-unread').classList.add('text-gray-400');
+                document.getElementById('tab-unread').classList.add('text-gray-500');
             }
 
             ['ALL', 'WAITING', 'BREACH'].forEach(id => {
                 const card = document.getElementById(`card-${id}`);
                 if (card) {
-                    if (filterType === id) { card.classList.add('border-black', 'border-4', 'opacity-100'); card.classList.remove('opacity-60'); }
-                    else { card.classList.remove('border-black', 'border-4', 'opacity-100'); card.classList.add('opacity-60'); }
+                    if (filterType === id) { 
+                        card.style.borderColor = '#FF0000';
+                        card.style.backgroundColor = 'rgba(255, 0, 0, 0.05)';
+                    } else { 
+                        card.style.borderColor = 'rgba(255, 0, 0, 0.25)';
+                        card.style.backgroundColor = 'transparent';
+                    }
                 }
             });
 
@@ -240,40 +293,44 @@
             listContainer.innerHTML = '';
             
             if (filteredArray.length === 0) {
-                listContainer.innerHTML = `<div class="text-center p-6 font-black text-gray-400 mt-10">TIDAK ADA CHAT SESUAI FILTER</div>`;
+                listContainer.innerHTML = `<div class="text-center p-6 font-mono text-xs text-gray-600 mt-10 tracking-widest">[NO_STREAMS_MATCH_FILTER]</div>`;
             }
 
             filteredArray.forEach(group => {
-                let cardClass = "p-3 rounded-xl mario-border cursor-pointer transition-transform active:translate-y-1 mb-2 ";
+                let cardClass = "p-4 matrix-hairline-border cursor-pointer transition-all hover:bg-white/[0.02] active:scale-[0.99] duration-150 ";
                 let badgeHtml = "";
+                let indicatorClass = "indicator-inactive";
 
                 if (group.isBreach) {
-                    cardClass += "sla-breach mario-shadow-sm";
-                    badgeHtml = `<span class="bg-red-600 text-white text-[10px] px-2 py-1 rounded-md font-black uppercase mario-border">Overdue ${Math.floor(group.diffMins)}m</span>`;
+                    cardClass += "sla-breach";
+                    badgeHtml = `<span class="bg-red-900/60 border border-red-600 text-red-200 text-[9px] px-2 py-0.5 font-mono uppercase tracking-wider">OVERDUE ${Math.floor(group.diffMins)}m</span>`;
+                    indicatorClass = "indicator-active";
                 } else if (group.isWaiting) {
-                    cardClass += "bg-[#FFD700] mario-shadow-sm";
-                    badgeHtml = `<span class="bg-black text-white text-[10px] px-2 py-1 rounded-md font-black uppercase">Tunggu ${Math.floor(group.diffMins)}m</span>`;
+                    cardClass += "bg-red-950/10";
+                    badgeHtml = `<span class="bg-black/80 border border-red-900 text-gray-300 text-[9px] px-2 py-0.5 font-mono uppercase tracking-wider">QUEUE ${Math.floor(group.diffMins)}m</span>`;
+                    indicatorClass = "indicator-active";
                 } else {
-                    cardClass += "bg-white border-gray-300 opacity-80 hover:bg-gray-50 border-2";
-                    badgeHtml = `<span class="text-black font-black text-[10px]">✓ SELESAI</span>`;
+                    cardClass += "bg-transparent opacity-60";
+                    badgeHtml = `<span class="text-gray-500 font-mono text-[9px] tracking-widest">RESOLVED</span>`;
                 }
 
-                if (currentActiveWa === group.wa) cardClass += " border-4 border-[#FF6B00]";
+                if (currentActiveWa === group.wa) cardClass += " !border-[#FF0000] bg-white/[0.03]";
 
                 const jam = group.lastMsgDate.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-                const snippet = group.lastMsg.tipe === 'Keluar' ? `Admin: ${group.lastMsg.pesan}` : group.lastMsg.pesan;
+                const snippet = group.lastMsg.tipe === 'Keluar' ? `Sys_Admin: ${group.lastMsg.pesan}` : group.lastMsg.pesan;
 
                 listContainer.innerHTML += `
                     <div onclick="openChat('${group.wa}')" class="${cardClass}">
-                        <div class="flex justify-between items-start mb-1">
-                            <div class="font-black text-black text-sm flex items-center pr-2 truncate">
-                                <span class="truncate">${group.name}</span> 
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-bold text-white text-sm flex items-center gap-3 pr-2 truncate">
+                                <span class="indicator-dot ${indicatorClass} shrink-0"></span>
+                                <span class="truncate tracking-wide">${group.name}</span> 
                             </div>
-                            <div class="text-[10px] text-black font-bold whitespace-nowrap bg-white px-1 rounded border border-black">${jam}</div>
+                            <div class="text-[10px] text-gray-400 font-mono bg-black/40 px-1.5 py-0.5 border border-white/5">${jam}</div>
                         </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <div class="text-xs text-gray-700 font-semibold truncate max-w-[60%]">${snippet}</div>
-                            <div>${badgeHtml}</div>
+                        <div class="flex justify-between items-center mt-3 gap-4">
+                            <div class="text-xs text-gray-400 font-light truncate max-w-[65%] font-mono">${snippet}</div>
+                            <div class="shrink-0">${badgeHtml}</div>
                         </div>
                     </div>
                 `;
@@ -290,7 +347,7 @@
             if (!group) return;
 
             document.getElementById('chat-name').innerHTML = `${group.name}`;
-            document.getElementById('chat-number').innerText = wa.includes('@') ? "WhatsApp Number" : "+" + wa;
+            document.getElementById('chat-number').innerText = wa.includes('@') ? "SESSION_NODE // IP_ROUTED" : "DATALINK // +" + wa;
             document.getElementById('avatar-placeholder').innerText = group.name.charAt(0).toUpperCase();
             
             const container = document.getElementById('message-container');
@@ -309,8 +366,8 @@
 
                 if (dateStr !== lastDateStr) {
                     container.innerHTML += `
-                        <div class="flex justify-center my-3">
-                            <div class="bg-black text-[#FFD700] mario-border px-3 py-1 rounded-xl text-[10px] font-black uppercase">
+                        <div class="flex justify-center my-4">
+                            <div class="bg-black/80 border border-[var(--matrix-hairline)] text-gray-400 font-mono px-3 py-1 text-[9px] tracking-widest uppercase">
                                 ${dateStr}
                             </div>
                         </div>
@@ -328,21 +385,21 @@
                     if (diffSec > 0) {
                         const mins = Math.floor(diffSec / 60);
                         const secs = Math.floor(diffSec % 60);
-                        let colorClass = mins > 8 ? 'bg-red-600' : 'bg-black';
-                        delayStamp = `<span class="ml-2 mt-1 inline-block ${colorClass} text-white px-2 py-0.5 rounded-md text-[9px] font-black mario-border">⏱️ ${mins}m ${secs}s</span>`;
+                        let colorClass = mins > 8 ? 'text-red-500 border-red-600' : 'text-gray-400 border-gray-600';
+                        delayStamp = `<span class="ml-2 inline-block border bg-black/40 px-1.5 py-0.5 text-[9px] font-mono tracking-wider ${colorClass}">⏱️ ${mins}m ${secs}s</span>`;
                     }
                     earliestUnansweredTime = null; 
                 }
                 
-                const checkmark = isAdmin ? `<span class="text-black ml-1">✓✓</span>` : '';
+                const checkmark = isAdmin ? `<span class="text-red-500 font-mono ml-1.5 font-bold">// COMPLETED</span>` : '';
 
                 container.innerHTML += `
-                    <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'}">
-                        <div class="bubble ${isAdmin ? 'bubble-admin' : 'bubble-customer'} mario-border mario-shadow-sm flex flex-col">
-                            <div class="text-black font-semibold break-words">${msg.pesan}</div>
-                            <div class="flex justify-between items-end gap-3 mt-1">
+                    <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-fade-in">
+                        <div class="bubble ${isAdmin ? 'bubble-admin' : 'bubble-customer'} flex flex-col">
+                            <div class="font-normal break-words leading-relaxed">${msg.pesan}</div>
+                            <div class="flex justify-between items-end gap-4 mt-2 border-t border-white/5 pt-1">
                                 <div>${delayStamp}</div>
-                                <div class="text-[10px] text-black opacity-60 font-black whitespace-nowrap">
+                                <div class="text-[9px] text-gray-500 font-mono tracking-wider whitespace-nowrap">
                                     ${timeStr} ${checkmark}
                                 </div>
                             </div>
