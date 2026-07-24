@@ -83,7 +83,7 @@
 </head>
 <body class="h-[100dvh] w-full overflow-hidden flex p-2 md:p-6 gap-6 backdrop-blur-sm">
 
-    <!-- SIDEBAR MONITOR (Selalu Terbuka/Flex) -->
+    <!-- SIDEBAR MONITOR -->
     <div id="sidebar" class="w-full md:w-[440px] flex flex-col bg-[var(--matrix-panel-bg)] matrix-hairline-border backdrop-blur-xl h-full z-10 relative overflow-hidden min-h-0">
         
         <!-- HEADER -->
@@ -131,7 +131,7 @@
         </div>
     </div>
 
-    <!-- MAIN CHAT INTERFACE WINDOW (Kelas 'hidden' dihilangkan agar langsung tampil berdampingan di desktop) -->
+    <!-- MAIN CHAT INTERFACE WINDOW -->
     <div id="chat-window" class="hidden md:flex flex-1 flex-col bg-[var(--matrix-panel-bg)] matrix-hairline-border backdrop-blur-xl relative h-full overflow-hidden min-h-0 w-full">
         
         <!-- INTERFACE WINDOW HEADER -->
@@ -139,7 +139,7 @@
             <button onclick="backToList()" class="md:hidden mr-4 px-3 py-1.5 bg-transparent text-red-500 matrix-hairline-border font-mono text-xs hover:bg-red-950/30 active:scale-95 transition-all">
                 &lt; BACK
             </button>
-            <div class="w-9 h-9 border border border-[var(--matrix-hairline)] flex items-center justify-center text-sm mr-3 font-mono text-white bg-black/60" id="avatar-placeholder">?</div>
+            <div class="w-9 h-9 border border-[var(--matrix-hairline)] flex items-center justify-center text-sm mr-3 font-mono text-white bg-black/60" id="avatar-placeholder">?</div>
             <div class="flex-1 min-w-0">
                 <h2 class="font-bold text-white text-md tracking-wide uppercase truncate flex items-center gap-3" id="chat-name">
                     AWAITING_STREAM
@@ -159,6 +159,7 @@
     </div>
 
     <script>
+        // WEBHOOK YANG DIPERBARUI BERDASARKAN TAUTAN BARU ANDA
         const WA_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/get-chat-logs";
         const BIZ_WEBHOOK = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1";
         
@@ -236,7 +237,6 @@
 
             renderSidebar();
             
-            // Otomatis buka chat pertama jika link baru dibuka dan belum ada chat aktif yang dipilih
             if (!currentActiveWa && groupedGroupsArray.length > 0) {
                 openChat(groupedGroupsArray[0].wa, true);
             } else if (currentActiveWa) {
